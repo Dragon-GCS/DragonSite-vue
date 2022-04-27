@@ -1,0 +1,9 @@
+.venv
+.vscode
+__pycache__
+
+migrations
+dist
+
+*.sqlite
+test*

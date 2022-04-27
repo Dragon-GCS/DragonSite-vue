@@ -1,0 +1,4 @@
+flask
+flask-migrate
+flask-restful
+flask-sqlalchemy
