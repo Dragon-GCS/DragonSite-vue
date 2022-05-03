@@ -6,6 +6,7 @@ import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: "./",
   plugins: [vue(),
     AutoImport({
       resolvers: [ElementPlusResolver()],
@@ -21,4 +22,15 @@ export default defineConfig({
       '/api': {target:'http://127.0.0.1:5000/', changeOrigin: true},
     }
   },
+  build: {
+    outDir: "dist",
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return id.toString().split("node_modules/")[1].split("/")[0].toString()
+          }
+        }
+      }
+  }}
 })

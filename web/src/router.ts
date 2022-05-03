@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 
 const routes: Array<RouteRecordRaw> = [
-  { path: "/", redirect: {name: 'main', query: { path: '/'}} },
+  { path: "/", redirect: {name: 'main', query: { path: '/', logRequire: 'false'}} },
   {
     path: '/home',
     name: 'main',

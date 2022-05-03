@@ -1,14 +1,18 @@
 <script setup lang="ts">
-// This starter template is using Vue 3 <script setup> SFCs
-// Check out https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup
+import { siteName } from './config';
+document.title = siteName
 </script>
 
 <template>
   <el-container class="main-con">
-    <Header site-name="DragonSite"></Header>
+    <el-header>
+      <Header :site-name="siteName"></Header>
+    </el-header>
     <el-container>
       <side-menu/>
-      <Main></Main>
+      <el-main>
+        <router-view :key="$route.fullPath"></router-view>
+      </el-main>
     </el-container>
   </el-container>
 </template>
@@ -19,7 +23,12 @@
   height: 100%;
   flex-direction: column;
 }
-
+.el-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e6e6e6;
+}
 a {
   text-decoration: none;
 }

@@ -15,5 +15,6 @@ export function breadcrumb(path: String): Array<[String, String]> {
 }
 
 export function getIconUrl(icon: String, color: String = 'currentColor') {
+    // https://icones.js.org/
     return `https://api.iconify.design/${icon}?color=${color}`
 }

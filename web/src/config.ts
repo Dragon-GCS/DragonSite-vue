@@ -19,3 +19,4 @@ export const cates: Array<Cate> = [
     { name: "文档", icon: "emojione-v1:document-with-text.svg", by: "document" },
     { name: "其他", icon: "flat-color-icons:answers.svg", by: "other" },
 ]
+export const siteName = "DragonSite"

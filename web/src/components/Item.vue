@@ -1,7 +1,7 @@
 <template>
     <div class="item-box" @mouseenter="show = !show" @mouseleave="show = !show">
-        <div style="width:110px;position: absolute;z-index: 1;display: flex;">
-            <el-checkbox v-if="show || selected" @change="selected = !selected"></el-checkbox>
+        <div style="width:110px;position:absolute;z-index: 1;display: flex;">
+            <el-checkbox v-if="show || selected" @change="select"></el-checkbox>
         </div>
         <router-link :to="
         {name: 'main', 
@@ -11,7 +11,7 @@
             filter: route.query.filter
         }}">
             <div>
-                <img :src="getImageUrl(data)" :alt="data.name" width="64" @click="toItem()">
+                <img :src='`/assets/${data["type"]}.png`' :alt="data.name" width="64">
             </div>
             {{ data.name }}
         </router-link>
@@ -20,7 +20,6 @@
             <el-button type="info" size="small">重命名</el-button>
         </el-button-group>
     </div>
-    {{ data }}
 </template>
 
 <script setup lang="ts">
@@ -29,29 +28,12 @@ import { ref } from 'vue'
 const show = ref(false);
 const selected = ref(false)
 const route = useRoute();
-const getImageUrl = (data: Record<string, any>) => {
-    if (data.isDir) {
-        //https://icons8.com/icons/set/folder
-        return new URL("../assets/folder.png", import.meta.url).href;
-    }
-    else {
-        return new URL(`../assets/${data.type}.png`, import.meta.url).href;
-    }
+const emit = defineEmits(["selectCheckbox"]);
+const props = defineProps(["data", "showCheckbox"]);
+const select = () => {
+    selected.value = !selected.value;
+    emit('selectCheckbox', selected.value, props.data);
 }
-
-const props = defineProps(
-    {
-        data: {
-            type: Object,
-            default() {
-                return { name: '', isDir: false, type: 'file' }
-            }
-        },
-    }
-)
-const emits = defineEmits(
-    ['pointerenter', "pointerleave"]
-)
 </script>
 
 <style>
