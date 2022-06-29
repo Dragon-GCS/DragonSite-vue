@@ -33,15 +33,14 @@
             </el-button>
         </el-button-group>
     </el-row>
-    <div>querys: {{ query }}</div>
-    <div>full_path: {{route.fullPath}}</div>
+    <!-- <div>querys: {{ query }}</div>
+    <div>full_path: {{route.fullPath}}</div> -->
     <div style="display: flex; flex-wrap: wrap;">
         <Item 
         v-for="item in items"
         :data="item"
         @select-checkbox="handleSelect">
         </Item>
-        <But/>
     </div>
 </template>
 
@@ -52,6 +51,8 @@ import Item from '../components/Item.vue';
 import { useRoute, useRouter } from 'vue-router';
 import { breadcrumb, getIconUrl } from '../utils'
 import { items } from '../data';
+
+defineEmits(["pointerenter", "pointerleave"]);
 
 const route = useRoute();
 const router = useRouter();

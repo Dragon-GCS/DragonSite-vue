@@ -7,6 +7,7 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
+defineEmits(["pointerenter", "pointerleave"]);
 const router = useRouter();
 const login = () => router.push({ path: '/login' });
 const goHome = () => router.push({ path: '/'});
