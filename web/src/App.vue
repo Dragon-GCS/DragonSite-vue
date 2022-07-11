@@ -1,10 +1,5 @@
-<script setup lang="ts">
-import { siteName } from './config';
-document.title = siteName
-</script>
-
 <template>
-  <el-container class="main-con">
+  <el-container>
     <el-header>
       <Header :site-name="siteName"></Header>
     </el-header>
@@ -17,11 +12,15 @@ document.title = siteName
   </el-container>
 </template>
 
+<script setup lang="ts">
+import { siteName } from './config';
+document.title = siteName
+</script>
 
 <style>
-.main-con {
+* { margin: 0; padding: 0; }
+.el-container {
   height: 100%;
-  flex-direction: column;
 }
 .el-header {
     display: flex;

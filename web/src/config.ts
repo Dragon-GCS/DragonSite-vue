@@ -3,20 +3,25 @@ type Menu = {
     icon: string;
     logRequire: string;
 }
-type Cate = {
+type FileType = {
     name: string;
     icon: string;
-    by: string;
+    type: string;
 }
-export const subMenus: Array<Menu> = [
-    { name: "公共网盘", icon: "fxemoji:harddisk.svg", logRequire: 'false' },
-    { name: "个人网盘", icon: "arcticons:password.svg", logRequire: 'true' },
+
+const getIconUrl = (icon: String) => {
+    return `https://api.iconify.design/${icon}?color=currentColor`
+}
+
+export const menus: Array<Menu> = [
+    { name: "公共网盘", logRequire: 'false', icon: getIconUrl("fxemoji:harddisk.svg") },
+    { name: "个人网盘", logRequire: 'true', icon: getIconUrl("arcticons:password.svg") },
 ]
-export const cates: Array<Cate> = [
-    { name: "全部", icon: "flat-color-icons:database.svg", by: "" },
-    { name: "图片", icon: "vscode-icons:file-type-image.svg", by: "image" },
-    { name: "视频", icon: "vscode-icons:file-type-video.svg", by: "video" },
-    { name: "文档", icon: "emojione-v1:document-with-text.svg", by: "document" },
-    { name: "其他", icon: "flat-color-icons:answers.svg", by: "other" },
+export const subMenus: Array<FileType> = [
+    { name: "全部", icon: getIconUrl("flat-color-icons:database.svg"), type: "" },
+    { name: "图片", icon: getIconUrl("vscode-icons:file-type-image.svg"), type: "image" },
+    { name: "视频", icon: getIconUrl("vscode-icons:file-type-video.svg"), type: "video" },
+    { name: "文档", icon: getIconUrl("emojione-v1:document-with-text.svg"), type: "document" },
+    { name: "其他", icon: getIconUrl("flat-color-icons:answers.svg"), type: "other" },
 ]
 export const siteName = "DragonSite"

@@ -1,18 +1,41 @@
+import { resolve } from 'path'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
+import ElementPlus from 'unplugin-element-plus/vite'
+import UnoCSS from 'unocss/vite'
+import UnocssIcons from '@unocss/preset-icons'
+
+const pathSrc = resolve(__dirname, 'src')
 
 // https://vitejs.dev/config/
 export default defineConfig({
   base: "./",
-  plugins: [vue(),
+  resolve: {
+    alias: {'@': pathSrc},
+  },
+  plugins: [
+    vue(),
     AutoImport({
       resolvers: [ElementPlusResolver()],
+      dts: resolve(pathSrc, 'auto-imports.d.ts'),
     }),
     Components({
       resolvers: [ElementPlusResolver()],
+    }),
+    ElementPlus(),
+    UnoCSS({
+      presets: [
+        UnocssIcons({
+          // options
+          prefix: 'i-',
+          extraProperties: {
+            display: 'inline-block'
+          }
+        }),
+      ],
     }),
   ],
   server: {

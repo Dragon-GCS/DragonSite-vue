@@ -1,56 +1,40 @@
 <template>
-    <el-menu :collapse="isCollapsed" :unique-opened="true" :router="true" default-active="0-0">
-        <el-sub-menu v-for="(menu, idx) in subMenus" :index="`${idx}`">
+    <el-menu
+    :collapse="isCollapsed"
+    :unique-opened="true"
+    :router="true"
+    default-active="0-0"
+    >
+        <el-sub-menu v-for="(menu, idx) in menus" :index="`${idx}`">
             <template #title>
-                <img width="20" :src="getIconUrl(menu.icon)" />
+                <img width="20" :src="menu.icon" />
                 <span>{{ menu.name }}</span>
             </template>
             <el-menu-item
-                v-for="(cate, subIdx) in cates"
-                :index="`${idx}-${subIdx}`"
-                :route="{
-                    name: 'main',
-                    query: {
-                        path: '/',
-                        logRequire: menu.logRequire,
-                        filter: cate.by}}"
+            v-for="(subMenu, subIdx) in subMenus"
+            :index="`${idx}-${subIdx}`"
+            :route="{ name: 'main', query: { path: '/', logRequire: menu.logRequire, filter: subMenu.type}}"
             >
-                <img :src="getIconUrl(cate.icon)" />
-                <span>{{ cate.name }}</span>
+                <img :src="subMenu.icon" />
+                <span>{{ subMenu.name }}</span>
             </el-menu-item>
         </el-sub-menu>
     </el-menu>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
-import {subMenus, cates} from '../config';
+<script setup lang="ts">
+import { onMounted, onUnmounted, ref } from "vue";
+import { menus, subMenus } from '../config';
 
-export default defineComponent({
-    data() {
-        return {
-            isCollapsed: document.body.clientWidth < 768,
-            subMenus,
-            cates,
-        }
-    },
+let isCollapsed = ref<boolean>(document.body.clientWidth < 768);
 
-    mounted() {
-        window.onresize = () => {
-            return (() => {
-                this.isCollapsed = document.body.clientWidth < 768;
-            })()
-        };
-    },
-
-    destoryed() { window.onresize = null },
-
-    methods: {
-        getIconUrl(icon: String) {
-            return `https://api.iconify.design/${icon}?color=currentColor`
-        }
+onMounted(() => {
+    window.onresize = () => {
+        isCollapsed.value = document.body.clientWidth < 768;
     }
-})
+}
+)
+onUnmounted(() => {window.onresize = null})
 </script>
 
 <style>
