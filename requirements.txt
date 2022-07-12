@@ -1,3 +1,6 @@
+databases
+pydantic>=1.5
+sqlalchemy
 fastapi
 uvicorn[standard]
 ormar[sqlite]
