@@ -3,7 +3,6 @@
 __pycache__
 
 migrations
-dist
 
 *.sqlite
 test*

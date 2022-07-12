@@ -2,6 +2,8 @@
 
 **开发中。。。**
 
+![preview](pictures/preview.png)
+
 ## 运行脚本
 
 * 打包： `cd web && npm build`
