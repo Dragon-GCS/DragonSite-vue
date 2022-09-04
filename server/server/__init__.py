@@ -3,9 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-
-from server import api, models
+from server import api
 from server import config as CONF
+from server.models import database, init_db
 
 app = FastAPI()
 app.include_router(api.router)
@@ -23,13 +23,13 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def connect_db():
-    await models.init_db()
-    await models.database.connect()
+    await init_db()
+    await database.connect()
 
 
 @app.on_event("shutdown")
 async def disconnect_db():
-    await models.database.disconnect()
+    await database.disconnect()
 
 
 @app.get("/", response_class=RedirectResponse)

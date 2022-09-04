@@ -1,19 +1,17 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Query, UploadFile, File
+from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel
-
-from server.config import FileCats, FILE_PATH_REGEX, FILENAME_REGEX
+from server.config import FILE_PATH_REGEX, FILENAME_REGEX, FileCats
 from server.models import UserData
-
 
 router = APIRouter(prefix="/disk", tags=["disk"])
 
 
 @router.get("/", summary="Get the resources under the specified path")
 async def get_resources(path: str = Query(regex=FILE_PATH_REGEX),
-                       category: FileCats = Query(
-                           FileCats.ALL, description="Filter resources by category")):
+                        category: FileCats = Query(
+                            FileCats.ALL, description="Filter resources by category")):
     files = await UserData.get_resources(path, category)
     return files
     return {"message": "get path: {path} category: {category}"}
@@ -52,8 +50,8 @@ async def delete_resources(
 @router.patch("/", summary="Rename resource or move resources")
 def modify_resource(path: str = Query(regex=FILE_PATH_REGEX),
                     target: str = Query(regex=FILE_PATH_REGEX),
-                    is_dir: List[bool] = Query(default=[],
-                                         description="Available only names was empty"),
+                    is_dir: List[bool] = Query(
+                        default=[], description="Available only names was empty"),
                     names: List[str] = Query(
                         default=[],
                         description=("When names is empty, rename path to target, "

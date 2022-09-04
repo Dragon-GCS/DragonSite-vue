@@ -20,5 +20,5 @@ dev-dependencies = ["pylint", "yapf"]
 based_on_style = "google"
 COLUMN_LIMIT = 89
 blank_line_before_nested_class_or_def = false
-blank_lines_between_top_level_imports_and_variables = 2
+blank_lines_between_top_level_imports_and_variables = 1
 DEDENT_CLOSING_BRACKETS = false

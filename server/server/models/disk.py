@@ -270,8 +270,8 @@ class UserData(ormar.Model):
             if not resource:
                 continue
             dst_resource = await cls.objects.get_or_none(path=f"{dst_path}/{name}",
-                                                        is_dir=is_dir,
-                                                        owner=owner)
+                                                         is_dir=is_dir,
+                                                         owner=owner)
             if dst_resource:
                 resources.append(dst_resource)
                 continue
@@ -283,7 +283,8 @@ class UserData(ormar.Model):
             return []
         await cls.objects.bulk_update(resources, ["parent", "path", "modified_time"])
         logger.success(
-            f"Moving resources{[r.name for r in resources]} from {src.path} to {dst.path}.")
+            f"Moving resources{[r.name for r in resources]} from {src.path} to {dst.path}."
+        )
         return resources
 
 
