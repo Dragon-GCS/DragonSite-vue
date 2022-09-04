@@ -4,38 +4,40 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 
-from fastapp import api, auth
-from fastapp import config as CONF
+from server import api, models
+from server import config as CONF
 
 app = FastAPI()
 app.include_router(api.router)
-app.include_router(auth.router)
-app.mount('/assets', StaticFiles(directory=CONF.DIST_DIR / 'assets'), name='assets')
+app.mount("/assets", StaticFiles(directory=CONF.DIST_DIR / "assets"), name="assets")
 
 # CORS for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins = ['http://localhost', 'http://localhost:*'],
-    allow_credentials = True,
-    allow_methods=['*'],
-    allow_headers=['*'],
+    allow_origins=["http://localhost", "http://localhost:*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
+
 
 @app.on_event("startup")
 async def connect_db():
-    pass
+    await models.init_db()
+    await models.database.connect()
 
 
 @app.on_event("shutdown")
 async def disconnect_db():
-    pass
+    await models.database.disconnect()
 
 
 @app.get("/", response_class=RedirectResponse)
 async def index():
-    return RedirectResponse(url='/home')
+    return RedirectResponse(url="/home")
 
 
 @app.get("/home", response_class=HTMLResponse)
 async def home():
-    return open(CONF.DIST_DIR / 'index.html').read()
+    with open(CONF.DIST_DIR / "index.html") as f:
+        return HTMLResponse(content=f.read())

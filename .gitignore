@@ -1,6 +1,9 @@
-.venv
-.vscode
-__pycache__
+**/.venv/
+**/.vscode/
+**/__pycache__/
+
+dist/
+
 
 migrations
 
