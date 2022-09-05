@@ -23,13 +23,15 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def connect_db():
+    if not database.is_connected:
+        await database.connect()
     await init_db()
-    await database.connect()
 
 
 @app.on_event("shutdown")
 async def disconnect_db():
-    await database.disconnect()
+    if database.is_connected:
+        await database.disconnect()
 
 
 @app.get("/", response_class=RedirectResponse)

@@ -19,10 +19,10 @@ FILE_DIR = ROOT / "files"
 # frontend dist dir
 DIST_DIR = ROOT / "../dist"
 
-# regex for validating file path
-FILE_PATH_REGEX = r"^(/|(/\w+)+)$"
 # regex for validating file name
 FILENAME_REGEX = r"[^/:<>\\\*\|]"
+# regex for validating file path
+FILE_PATH_REGEX = rf"^(/{FILENAME_REGEX}+)+|/$"
 
 
 class FileCats(Enum):

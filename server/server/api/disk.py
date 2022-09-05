@@ -1,3 +1,4 @@
+from hashlib import md5
 from typing import List, Optional
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
@@ -8,31 +9,47 @@ from server.models import UserData
 router = APIRouter(prefix="/disk", tags=["disk"])
 
 
-@router.get("/", summary="Get the resources under the specified path")
+@router.get("/",
+            summary="Get the resources under the specified path",
+            response_model=List[UserData],
+            response_model_exclude={"id", "parent"})
 async def get_resources(path: str = Query(regex=FILE_PATH_REGEX),
                         category: FileCats = Query(
                             FileCats.ALL, description="Filter resources by category")):
-    files = await UserData.get_resources(path, category)
-    return files
-    return {"message": "get path: {path} category: {category}"}
+    return await UserData.get_resources(path, category)
 
 
-@router.post("/", summary="Create a folder under the specified path")
+@router.post("/",
+             summary="Create a folder under the specified path",
+             response_model=List[UserData],
+             response_model_exclude={"id", "parent"})
 async def add_resource(path: str = Query(regex=FILE_PATH_REGEX),
-                       name: str = Query(regex=FILENAME_REGEX)):
-    return {"message": f"add dir: {path}/{name}"}
+                       name: List[str] = Query(regex=FILENAME_REGEX)):
+    are_dir = [True] * len(name)
+    files_size = [0] * len(name)
+    mime_type = digests = [""] * len(name)
+    return await UserData.create_resources(path, name, are_dir, files_size, mime_type,
+                                           digests)
 
 
-@router.post("/upload", summary="Upload files to the specified path")
+@router.post("/upload",
+             summary="Upload files to the specified path",
+             response_model=List[UserData],
+             response_model_exclude={"id", "parent"})
 async def upload_resource(path: str = Query(regex=FILE_PATH_REGEX),
                           files: List[UploadFile] = File()):
+
+    are_dir = [False] * len(files)
+    names, files_size, mime_type, digests = [], [], [], []
     for file in files:
-        print(file.filename)
-        print(file.content_type)
+        names.append(file.filename)
+        mime_type.append(file.content_type)
         content = await file.read()
-    return {
-        "message": f"add {','.join('/'.join((path, file.filename)) for file in files)}"
-    }
+        files_size.append(len(content))
+        digests.append(md5(content).hexdigest())
+    print(names, files_size, mime_type, digests)
+    return await UserData.create_resources(path, names, are_dir, files_size, mime_type,
+                                           digests)
 
 
 @router.delete("/", summary="Delete the resources under specified path")
@@ -40,27 +57,27 @@ async def delete_resources(
         path: str = Query(regex=FILE_PATH_REGEX),
         is_dir: List[bool] = Query(
             description="Whether resource is a dir, same order as the names"),
-        names: List[str] = Query(description="Resources' name to delete under path")):
-    return {
-        "message":
-            f"In <{path}> delete {'folder' if is_dir else 'file'} {','.join(name for name in names)}"
-    }
+        name: List[str] = Query(description="Resources' name to delete under path")):
+    if path == "/":
+        path = ""
+    paths = [f"{path}/{n}" for n in name]
+    return await UserData.remove_resources(paths, is_dir)
 
 
-@router.patch("/", summary="Rename resource or move resources")
-def modify_resource(path: str = Query(regex=FILE_PATH_REGEX),
+@router.patch("/",
+              summary="Rename resource or move resources",
+              response_model=List[UserData],
+              response_model_exclude={"id", "parent"})
+async def modify_resource(path: str = Query(regex=FILE_PATH_REGEX),
                     target: str = Query(regex=FILE_PATH_REGEX),
                     is_dir: List[bool] = Query(
-                        default=[], description="Available only names was empty"),
+                        default=[], description="Resource to be rename/move is a dir or not"),
                     names: List[str] = Query(
                         default=[],
                         description=("When names is empty, rename path to target, "
                                      "otherwise move these resources to target"))):
     if names:
-        return {
-            "message":
-                f"Under <{path}> {','.join(name for name in names)} moved to <{target}>"
-        }
+        return await UserData.move_resources(path, target, names, is_dir)
     # use the last part of target split by '/' as new name
     new_name = target.rsplit("/", 1)[-1]
-    return {"message": f"rename dir: {path} to {new_name}"}
+    return await UserData.rename_resource(path, new_name, is_dir[0])
