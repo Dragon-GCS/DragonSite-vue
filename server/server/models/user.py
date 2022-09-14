@@ -1,4 +1,3 @@
-from email.policy import default
 from hashlib import md5
 
 import ormar

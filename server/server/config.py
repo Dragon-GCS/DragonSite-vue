@@ -24,6 +24,9 @@ FILENAME_REGEX = r"[^/:<>\\\*\|]"
 # regex for validating file path
 FILE_PATH_REGEX = rf"^(/{FILENAME_REGEX}+)+|/$"
 
+# cookie validity
+COOKIE_MAX_AGE = 60 * 60 * 24 * 7  # 7 days
+
 
 class FileCats(Enum):
     """ file categories enum"""

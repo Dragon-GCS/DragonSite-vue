@@ -1,13 +1,13 @@
 from datetime import datetime
-from pprint import pprint
 from typing import Any, ForwardRef, List, Optional
-from typing_extensions import Self
 
 import ormar
 from loguru import logger
 from pydantic import validator
 from server.config import FILE_PATH_REGEX, FileCats
-from server.exceptions import ArgsLengthNotEqual, FieldCheckError, ResourceNotFound, RootRenameError
+from server.exceptions import (ArgsLengthNotEqual, FieldCheckError, ResourceNotFound,
+                               RootRenameError)
+from typing_extensions import Self
 
 from .base import AutoUpdateModified, BaseConfig, BaseMeta
 from .user import User

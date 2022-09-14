@@ -1,0 +1,1 @@
+from server.depends.auth_dep import get_user

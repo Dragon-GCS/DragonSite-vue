@@ -29,3 +29,11 @@
   * `names`: 未给出时对`path`进行操作，否则对`path`下的文件、文件夹进行移动
 
 `/api/auth/login` 登陆验证
+
+登录流程
+
+1. 第一次登录，后端生成过期时间，保存到cookie， token与用户名保存并返回
+2. 前端保存token
+3. 每次请求从header中获取token，判断token是否在缓存中
+4. 不在缓存则返回401 authentic error
+5. 在缓存则验证token是否正确以及是否过期

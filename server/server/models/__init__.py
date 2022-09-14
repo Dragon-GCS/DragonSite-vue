@@ -3,8 +3,8 @@ from hashlib import md5
 import sqlalchemy
 from server.config import DATABASE_DIR, DATABASE_URL
 from server.exceptions import ResourceNotFound
-from server.models.base import metadata, database
-from server.models.disk import UserData, Digest
+from server.models.base import database, metadata
+from server.models.disk import UserData
 from server.models.user import User
 
 

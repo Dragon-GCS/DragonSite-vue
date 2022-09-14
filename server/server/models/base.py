@@ -4,7 +4,6 @@ from typing import Any, List
 import databases
 import ormar
 import sqlalchemy
-
 from server.config import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
