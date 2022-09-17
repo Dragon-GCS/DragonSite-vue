@@ -3,7 +3,7 @@ from typing import Dict, List, Optional
 
 from aiofiles import open
 from fastapi import APIRouter, Depends, File, Query, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from server.config import FILE_DIR, FILE_PATH_REGEX, FILENAME_REGEX, FileCats
 from server.depends import get_user
 from server.exceptions import ResourceNotFound
@@ -38,6 +38,15 @@ async def download_file(path: str = Query(regex=FILE_PATH_REGEX),
                                                                            owner=user)
     if not resource:
         raise ResourceNotFound(path)
+
+    if preview:
+        async def load():
+            async with open(resource.get_real_path(), "rb") as f:
+                async for line in f:
+                    yield line
+
+        return StreamingResponse(load(), media_type=resource.mime_type)
+
     return FileResponse(resource.get_real_path(),
                         media_type=resource.mime_type,
                         filename=str(resource.name))
