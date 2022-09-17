@@ -43,6 +43,6 @@ class AuthError(BaseException):
     """Raised when authentication failed"""
     status_code = status.HTTP_401_UNAUTHORIZED
 
-    def __init__(self, detail: str = "Authentication failed", ) -> None:
+    def __init__(self, detail: str = "Authentication failed") -> None:
         self.detail = detail
         super().__init__()

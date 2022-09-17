@@ -16,6 +16,7 @@ DATABASE_DIR = ROOT / DBNAME
 DATABASE_URL = f"sqlite:///{DATABASE_DIR}"
 # static files dir
 FILE_DIR = ROOT / "files"
+FILE_DIR.mkdir(parents=True, exist_ok=True)
 # frontend dist dir
 DIST_DIR = ROOT / "../dist"
 

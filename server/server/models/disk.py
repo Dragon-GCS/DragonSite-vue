@@ -4,7 +4,7 @@ from typing import Any, ForwardRef, List, Optional
 import ormar
 from loguru import logger
 from pydantic import validator
-from server.config import FILE_PATH_REGEX, FileCats
+from server.config import FILE_DIR, FILE_PATH_REGEX, FileCats
 from server.exceptions import (ArgsLengthNotEqual, FieldCheckError, ResourceNotFound,
                                RootRenameError)
 from typing_extensions import Self
@@ -72,9 +72,9 @@ class UserData(ormar.Model):
         Parent, ondelete="CASCADE", related_name="children")
 
     @ormar.property_field
-    def name(self) -> Optional[str]:
+    def name(self) -> str:
         if not self.path:
-            return
+            return ""
         if self.path == "/":
             return "root"
         return self.path.rsplit("/", 1)[-1]
@@ -95,6 +95,12 @@ class UserData(ormar.Model):
         if fmt == "G":
             return f"{self.file_size / 1024 / 1024 / 1024:.2f}Gb"
         return f"{self.file_size}B"
+
+    def get_real_path(self):
+        """Get the real path which store this resource"""
+        if not self.digest:
+            raise ValueError("Only files has real path")
+        return FILE_DIR / self.digest.digest
 
     async def update(self, _columns: List[str] = [], **kwargs: Any) -> Self:
         self.modified_time = datetime.now()
@@ -139,6 +145,7 @@ class UserData(ormar.Model):
             path = ""
 
         resources: List[UserData] = []
+        creates: List[UserData] = []
         for name, is_dir, file_size, mime_type, digest in zip(names, are_dir, files_size,
                                                               mime_types, digests):
             if not is_dir and not all((file_size, mime_type, digest)):
@@ -153,9 +160,10 @@ class UserData(ormar.Model):
                 digest, _ = await Digest.objects.get_or_create(digest=digest)
 
             resource_path = f"{path}/{name}"
-            resource = await cls.objects.get_or_none(path=resource_path,
-                                                     is_dir=is_dir,
-                                                     owner=user)
+            # load parent model to avoid field check error in response
+            resource = await cls.objects.select_related("parent").get_or_none(
+                path=resource_path, is_dir=is_dir, owner=user)
+
             if resource is not None:
                 parent.file_size += resource.file_size
                 logger.info(f"Resource<{path}/{name}> already exists.")
@@ -169,11 +177,13 @@ class UserData(ormar.Model):
                                     digest=digest,
                                     owner=user,
                                     parent=parent)
+                creates.append(resource)
             resources.append(resource)
-
-        await cls.objects.bulk_create(resources)
+        if creates:
+            await cls.objects.bulk_create(creates)
+            logger.success(f"Created resources{[r.path for r in creates]}.")
         await parent.update()  # update modified_time
-        logger.success(f"Created resources{[r.path for r in resources]}.")
+        logger.debug(resources)
         return resources
 
     @classmethod
