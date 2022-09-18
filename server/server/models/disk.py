@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from typing import Any, ForwardRef, List, Optional
 
@@ -5,8 +6,8 @@ import ormar
 from loguru import logger
 from pydantic import validator
 from server.config import FILE_DIR, FILE_PATH_REGEX, FileCats
-from server.exceptions import (ArgsLengthNotEqual, FieldCheckError, ResourceNotFound,
-                               RootRenameError)
+from server.exceptions import (ArgsLengthNotEqual, FieldCheckError,
+                               ResourceNotFound, RootRenameError)
 from typing_extensions import Self
 
 from .base import AutoUpdateModified, BaseConfig, BaseMeta
@@ -183,7 +184,6 @@ class UserData(ormar.Model):
             await cls.objects.bulk_create(creates)
             logger.success(f"Created resources{[r.path for r in creates]}.")
         await parent.update()  # update modified_time
-        logger.debug(resources)
         return resources
 
     @classmethod
@@ -210,12 +210,16 @@ class UserData(ormar.Model):
             raise ArgsLengthNotEqual(["path", "is_dir"], [paths, are_dir])
 
         for path, is_dir in zip(paths, are_dir):
-            resource = await cls.objects.get_or_none(path=path,
-                                                     is_dir=is_dir,
-                                                     owner=owner)
+            resource = await cls.objects.select_related("digest").get_or_none(
+                path=path, is_dir=is_dir, owner=owner)
             if not resource:
                 continue
+            if resource.digest and len(resource.digest.files) == 1:
+                await resource.digest.delete()
+                os.remove(resource.get_real_path())
+                logger.info(f"Removed digest<{resource.digest.digest}>.")
             await resource.delete()
+
             logger.success(f"Resource<{path}> removed.")
 
     @classmethod

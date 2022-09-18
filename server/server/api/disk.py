@@ -28,7 +28,6 @@ async def get_resources(path: str = Query(regex=FILE_PATH_REGEX),
     return await UserData.get_resources(path, category, user)
 
 
-# TODO: Preview file
 @router.get("/download", summary="Download the specified file")
 async def download_file(path: str = Query(regex=FILE_PATH_REGEX),
                         user: Optional[User] = Depends(get_user),

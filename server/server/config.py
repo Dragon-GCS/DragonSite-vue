@@ -33,9 +33,11 @@ class FileCats(Enum):
     """ file categories enum"""
     ALL = "all"
     AUDIO = "audio"
-    VIDEO = "video"
-    IMAGE = "image"
     DOCUMENT = "document"
+    IMAGE = "image"
+    MARKDOWN = "markdown"
+    PDF = "pdf"
+    VIDEO = "video"
     OTHER = "other"
     NONE = ""
 
@@ -57,4 +59,8 @@ class FileCats(Enum):
             return cls.IMAGE.value
         if "document" in mime_type:
             return cls.DOCUMENT.value
+        if "pdf" in mime_type:
+            return cls.PDF.value
+        if "markdown" in mime_type:
+            return cls.MARKDOWN.value
         return cls.OTHER.value
