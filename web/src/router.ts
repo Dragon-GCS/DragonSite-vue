@@ -13,10 +13,16 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import(/* webpackChunkName: "view" */   './views/Login.vue'),
   },
   {
-    path: '/:path(.*)',
-    name: 'NotFound',
-    component: () => import(/* webpackChunkName: "view" */   './views/NotFound.vue'),
+    path: '/preview',
+    name: 'preview',
+    component: () => import(/* webpackChunkName: "view" */   './views/Preview.vue'),
+    props: true
   },
+  // {
+  //   path: '/:path(.*)',
+  //   name: 'NotFound',
+  //   component: () => import(/* webpackChunkName: "view" */   './views/NotFound.vue'),
+  // },
 ]
 
 const router = createRouter({

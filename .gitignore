@@ -1,6 +1,7 @@
 **/.venv/
 **/.vscode/
 **/__pycache__/
+**/node_modules/
 
 dist/
 files/
@@ -10,3 +11,5 @@ migrations
 *.sqlite
 test*
 demo*
+
+!test/test*

@@ -12,8 +12,8 @@
 * 删除用户：`flask user drop 'username'`
 * 数据库：`flask db init; flask db migrate; flask db upgrade`
 
-## server task list
+## TODO
 
-* 用户创建
-* 修改密码
-* 文件增删改查
+* 批量移动
+* 全选功能
+* 下载文件的window.open没有header

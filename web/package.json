@@ -10,11 +10,13 @@
   "dependencies": {
     "axios": "^0.26.1",
     "element-plus": "^2.2.8",
+    "qs": "^6.11.0",
     "vue": "^3.2.37",
     "vue-router": "^4.0.14"
   },
   "devDependencies": {
     "@iconify/json": "^2.1.76",
+    "@types/qs": "^6.9.7",
     "@unocss/preset-icons": "^0.44.0",
     "@vitejs/plugin-vue": "^2.2.0",
     "@volar/pug-language-service": "^0.33.7",

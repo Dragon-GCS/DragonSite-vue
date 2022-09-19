@@ -9,7 +9,7 @@
       </el-form-item>
       <el-form-item>
         <div class="login-button">
-          <el-button type="primary" @click="onSubmit">登录</el-button>
+          <el-button type="primary" @click="onSubmit(ruleFormRef)">登录</el-button>
           <el-button :disabled="true">注册</el-button>
         </div>
       </el-form-item>
@@ -20,6 +20,12 @@
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
 import type { FormInstance } from 'element-plus'
+import { login } from "../api"
+import { loginState } from '../config'
+import { useRoute, useRouter } from 'vue-router';
+
+const route = useRoute();
+const router = useRouter();
 
 const ruleFormRef = ref<FormInstance>()
 const ruleForm = reactive({
@@ -29,11 +35,15 @@ const ruleForm = reactive({
 
 const onSubmit = async (formEl: FormInstance | undefined) => {
   if (!formEl) return
-  await formEl.validate((valid, fields) => {
+  await formEl.validate((valid) => {
     if (valid) {
+      login(ruleForm.name, ruleForm.password).then(res => {
+        console.log(res)
+        if (res) { router.push(route.query.redirect?.toString() || "/")}
+      })
       console.log('submit!')
     } else {
-      console.log('error submit!', fields)
+      console.log('error submit!')
     }
   })
 }

@@ -36,9 +36,10 @@ class FileCats(Enum):
     DOCUMENT = "document"
     IMAGE = "image"
     MARKDOWN = "markdown"
-    PDF = "pdf"
-    VIDEO = "video"
     OTHER = "other"
+    PDF = "pdf"
+    TEXT = "text"
+    VIDEO = "video"
     NONE = ""
 
     @classmethod
@@ -51,16 +52,14 @@ class FileCats(Enum):
         """
         if not mime_type:
             return cls.NONE.value
-        if "audio" in mime_type:
+        if mime_type.startswith("audio"):
             return cls.AUDIO.value
-        if "video" in mime_type:
+        if mime_type.startswith("video"):
             return cls.VIDEO.value
-        if "image" in mime_type:
+        if mime_type.startswith("image"):
             return cls.IMAGE.value
-        if "document" in mime_type:
+        if mime_type.startswith("text"):
+            return cls.TEXT.value
+        if "document" in mime_type or mime_type.endswith("pdf"):
             return cls.DOCUMENT.value
-        if "pdf" in mime_type:
-            return cls.PDF.value
-        if "markdown" in mime_type:
-            return cls.MARKDOWN.value
         return cls.OTHER.value
