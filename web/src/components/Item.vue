@@ -22,7 +22,6 @@ import { ElMessageBox } from 'element-plus';
 import { downloadFile, previewFile } from '../api';
 
 const route = useRoute();
-const router = useRouter()
 const props = defineProps(["data", "selectedArray", "idx"]);
 const emit = defineEmits(["select", "remove", "rename", "preview"]);
 

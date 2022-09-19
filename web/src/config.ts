@@ -13,6 +13,7 @@ type FileType = {
 
 // http://www.fontawesome.com.cn/
 // https://icon-sets.iconify.design/
+// https://www.aconvert.com/image/svg-to-png/
 const getIconUrl = (icon: String) => {
     return `https://api.iconify.design/${icon}?color=currentColor`
 }
@@ -37,7 +38,7 @@ export const token = ref(localStorage.getItem("token") || "")
 export const expiredTime = ref(localStorage.getItem("expired_time") || "")
 export const loginState = ref(false || username.value !== "")
 
-export const previewable = ["image", "video", "audio", "document", "text"]
+export const previewable = ["image", "video", "audio"]
 export const items = ref<UserData[]>([])
 
 export interface UserData {

@@ -1,1 +1,0 @@
-var s=(t,e)=>{const r=t.__vccOpts||t;for(const[n,o]of e)r[n]=o;return r};const a={inheritAttrs:!1};function c(t,e,r,n,o,_){return" This page is not found "}var f=s(a,[["render",c]]);export{f as default};

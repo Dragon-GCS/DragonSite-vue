@@ -64,6 +64,7 @@ const percentage = ref<number>(0)
 // Load resource
 let selected_array = ref<boolean[]>([])
 
+items.value = []
 loadResource(
     (route.query.path || "/").toString(),
     route.query.logRequire === "true",
@@ -85,11 +86,9 @@ const handleSelect = (idx: number) => {
         select_item.value = select_item.value.filter(
             (item) => item.name !== items.value[idx].name)
     }
-    console.log("select", selected_array.value)
 }
 
 const selectAll = () => {
-    console.log("select all", select_item.value)
     if (select_item.value.length === items.value.length) {
         select_item.value = []
         for (let i = 0; i < selected_array.value.length; i++) {
@@ -101,11 +100,12 @@ const selectAll = () => {
         }
         select_item.value = items.value
     }
-    console.log("select all", select_item.value, selected_array.value)
 }
 
 const handlePreview = (idx: number) => {
     let resource = items.value[idx]
+    items.value = items.value.filter((item) => previewable.includes(item.category))
+    idx = items.value.findIndex((item) => item.path === resource.path)
     if (resource.is_dir) {
         router.push({
             name: 'main',
@@ -116,7 +116,6 @@ const handlePreview = (idx: number) => {
             }
         })
     } else if (previewable.includes(resource.category)) {
-        items.value = items.value.filter((item) => previewable.includes(item.category))
         router.push({
             name: 'preview',
             query: {
@@ -125,7 +124,7 @@ const handlePreview = (idx: number) => {
             }
         })
     } else {
-        downloadFile(resource.path, route.query.logRequire === "true")
+        downloadFile(resource.name, resource.path, route.query.logRequire === "true")
     }
 }
 
@@ -182,6 +181,8 @@ const handleRemoveResource = (resource: UserData) => {
             ElMessage.error("删除失败"); return
         }
         items.value = items.value.filter(e => e !== resource)
+        selected_array.value.fill(false)
+        console.log("remove resource", res)
         ElMessage.success("删除成功")
     })
 }
@@ -203,6 +204,7 @@ const removeAll = async () => {
             }
             items.value = items.value.filter(e => !select_item.value.includes(e))
             select_item.value = []
+            selected_array.value.fill(false)
             ElMessage.success("删除成功")
         })
     }).catch(() => {

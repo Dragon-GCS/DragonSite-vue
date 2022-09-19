@@ -29,15 +29,13 @@ const idx = Number.parseInt(route.query.idx as string);
 const type = items.value[idx].category;
 const files = items.value
 
-console.log(items, idx)
-
 const blob = ref("")
 previewFile(files[idx].path as string, route.query.logRequire === "true").then((res) => {
     blob.value = URL.createObjectURL(new Blob([res]))
 })
 
 const download = () => {
-    downloadFile(files[idx].path as string, route.query.logRequire === "true")
+    downloadFile(files[idx].name, files[idx].path as string, route.query.logRequire === "true")
 }
 const prevFile = () => {
     if (idx <= 0) { return }

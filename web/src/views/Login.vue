@@ -38,7 +38,6 @@ const onSubmit = async (formEl: FormInstance | undefined) => {
   await formEl.validate((valid) => {
     if (valid) {
       login(ruleForm.name, ruleForm.password).then(res => {
-        console.log(res)
         if (res) { router.push(route.query.redirect?.toString() || "/")}
       })
       console.log('submit!')

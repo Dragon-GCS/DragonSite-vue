@@ -57,8 +57,19 @@ export const createFolder = async (
     })
 }
 
-export const downloadFile = (full_path: string, login_require: boolean = false) => {
-    window.open(`/api/disk/download?path=${full_path}&preview=false&login_require=${login_require}`, "_self")
+export const downloadFile = (filename: string, full_path: string, login_require: boolean = false) => {
+    return axios.get("/api/disk/download", {
+        params: { path: full_path, preview: false, login_require },
+        headers: get_tokens(),
+    }).then((res) => {
+        var a = document.createElement('a')
+        a.href = URL.createObjectURL(new Blob([res.data]))
+        a.style.display = 'none'
+        a.setAttribute('download', filename)
+        document.body.appendChild(a)
+        a.click()
+        URL.revokeObjectURL(a.href)
+    })
 }
 
 export const previewFile = (full_path: string, login_require: boolean = false) => {
