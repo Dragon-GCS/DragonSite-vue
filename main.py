@@ -1,8 +1,14 @@
-from fastapi import FastAPI
+import uvicorn
+import os
 
-app = FastAPI()
+from loguru import logger
 
+if not os.getenv("APPKEY"):
+    os.environ["APPKEY"] = "1234567890"
+    logger.warning(f"APPKEY not set, using default {os.getenv('APPKEY')}")
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
+if __name__ == '__main__':
+    uvicorn.run(app="server:app",
+                host="0.0.0.0",
+                port=8080,
+                reload=bool(os.getenv("DEBUG")))

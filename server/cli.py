@@ -1,6 +1,5 @@
 import asyncio
 
-import click
 from server.models import add_user, drop_user
 
 

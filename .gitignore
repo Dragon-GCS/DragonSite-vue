@@ -8,7 +8,4 @@ files/
 migrations
 
 *.sqlite
-test*
 demo*
-
-!test/test*

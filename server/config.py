@@ -8,8 +8,7 @@ DEBUG = bool(os.environ.get("DEBUG"))
 DBNAME = "test.sqlite" if DEBUG else os.environ.get("DBNAME", "db.sqlite")
 
 # root directory is server folder
-ROOT = Path(__file__).parent.parent.absolute()
-PORT = 8888
+ROOT = Path(__file__).parent.absolute()
 
 # database dir
 DATABASE_DIR = ROOT / DBNAME

@@ -35,10 +35,14 @@ async def add_user(username: str, password: str, is_admin: bool = False) -> User
         raise ValueError(f"Only one admin<{admin.username}> user allowed.")
 
     password = md5(password.encode("utf-8")).hexdigest()
-    user = await User.objects.update_or_create(username=username,
-                                               password=password,
-                                               is_admin=is_admin)
-    await UserData(path="/", is_dir=True, owner=user).save()
+    user = await User.objects.get_or_none(username=username)
+    if user is None:
+        user = User(username=username, password=password, is_admin=is_admin)
+        await user.save()
+        await UserData(path="/", is_dir=True, owner=user).save()
+    else:
+        await user.update(password=password, is_admin=is_admin)
+
     return user
 
 
