@@ -1,6 +1,7 @@
 from hashlib import md5
 from typing import Dict, List, Optional
 
+import cv2
 from aiofiles import open
 from fastapi import APIRouter, Depends, File, Query, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
@@ -39,6 +40,12 @@ async def download_file(path: str = Query(regex=FILE_PATH_REGEX),
         raise ResourceNotFound(path)
 
     if preview:
+        if resource.category == FileCats.IMAGE:
+            img = cv2.imread(str(resource.get_real_path()))
+            cv2.resize(img, (64, 64))
+            _, buffer = cv2.imencode(".jpg", img)
+            return StreamingResponse(buffer, media_type="image/jpeg")
+
         async def load():
             async with open(resource.get_real_path(), "rb") as f:
                 async for line in f:

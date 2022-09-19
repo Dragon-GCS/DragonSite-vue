@@ -37,12 +37,9 @@
             </el-button>
         </el-button-group>
     </el-row>
-    <div>query: {{ route.query }}</div>
-    <div>full_path: {{route.fullPath}}</div>
-    <div>select: {{ select_item }}</div>
     <div style="display: flex; flex-wrap: wrap;">
         <Item v-for="item,idx in items" :data="item" :idx="idx" :selectedArray="selected_array" @select="handleSelect"
-            @remove="handleRemoveResource" @rename="handleRename">
+            @remove="handleRemoveResource" @rename="handleRename" @preview="handlePreview">
         </Item>
     </div>
 </template>
@@ -52,9 +49,8 @@ import { ref } from "vue"
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox, ElUpload } from "element-plus";
 import { breadcrumb } from "../utils"
-import Item from "../components/Item.vue";
-import { loadResource, createFolder, removeResource, renameResource, get_tokens } from "../api"
-import { UserData } from "../config";
+import { loadResource, createFolder, downloadFile, removeResource, renameResource, get_tokens } from "../api"
+import { UserData, items, previewable } from "../config";
 
 defineEmits(["pointerenter", "pointerleave"]);
 
@@ -66,7 +62,6 @@ const uploading = ref<boolean>(false)
 const percentage = ref<number>(0)
 
 // Load resource
-let items = ref<UserData[]>([])
 let selected_array = ref<boolean[]>([])
 
 loadResource(
@@ -92,7 +87,7 @@ const handleSelect = (idx: number) => {
     }
     console.log("select", selected_array.value)
 }
-// TODO: 全部选择
+
 const selectAll = () => {
     console.log("select all", select_item.value)
     if (select_item.value.length === items.value.length) {
@@ -107,6 +102,31 @@ const selectAll = () => {
         select_item.value = items.value
     }
     console.log("select all", select_item.value, selected_array.value)
+}
+
+const handlePreview = (idx: number) => {
+    let resource = items.value[idx]
+    if (resource.is_dir) {
+        router.push({
+            name: 'main',
+            query: {
+                idx,
+                logRequire: route.query.logRequire,
+                filter: route.query.filter
+            }
+        })
+    } else if (previewable.includes(resource.category)) {
+        items.value = items.value.filter((item) => previewable.includes(item.category))
+        router.push({
+            name: 'preview',
+            query: {
+                idx,
+                logRequire: route.query.logRequire as string,
+            }
+        })
+    } else {
+        downloadFile(resource.path, route.query.logRequire === "true")
+    }
 }
 
 const newFolder = () => {

@@ -16,7 +16,6 @@ const routes: Array<RouteRecordRaw> = [
     path: '/preview',
     name: 'preview',
     component: () => import(/* webpackChunkName: "view" */   './views/Preview.vue'),
-    props: true
   },
   // {
   //   path: '/:path(.*)',

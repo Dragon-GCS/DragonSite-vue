@@ -1,13 +1,11 @@
 <template>
     <div class="item-box" @mouseenter="show=true" @mouseleave="show=false">
         <div class="check-box">
-            <el-checkbox
-            v-show="show || selectedArray[idx]"
-            @change="emit('select', idx)"
-            v-model="selectedArray[idx]" />
+            <el-checkbox v-show="show || selectedArray[idx]" @change="emit('select', idx)"
+                v-model="selectedArray[idx]" />
         </div>
-        <div @click="clickResource" class="click-block">
-            <p><img :src='`/assets/${icon}.png`' :alt="data.name" width="64" /></p>
+        <div @click="emit('preview', idx)" class="click-block">
+            <p><img :src='imgUrl' :alt="data.name" width="64" height="64"/></p>
             <p>{{ getDisplayName() }}</p>
         </div>
         <el-button-group v-show="show" style="margin: 5px 0px;">
@@ -21,43 +19,30 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessageBox } from 'element-plus';
-import { downloadFile } from '../api';
+import { downloadFile, previewFile } from '../api';
 
 const route = useRoute();
 const router = useRouter()
 const props = defineProps(["data", "selectedArray", "idx"]);
-const emit = defineEmits(["select", "remove", "rename"]);
+const emit = defineEmits(["select", "remove", "rename", "preview"]);
 
 const show = ref(false);
-const icon = props.data.is_dir ? 'folder' : props.data.category
+const imgUrl = ref("");
 
+if (props.data.is_dir) {
+    imgUrl.value = '/assets/folder.png'
+} else if (props.data.category === "image") {
+    previewFile(props.data.path, route.query.logRequire === "true").then((res) => {
+        let blob = window.URL.createObjectURL(new Blob([res]))
+        imgUrl.value = blob
+    })
+} else {
+    imgUrl.value = `/assets/${props.data.category}.png`
+}
 const getDisplayName = () => {
     return props.data.name.length > 12 ? props.data.name.slice(0, 6) + '...' + props.data.name.slice(-3) : props.data.name
 }
 
-const clickResource = () => {
-    if (props.data.is_dir) {
-        router.push({
-            name: 'main',
-            query: {
-                path: props.data.path,
-                logRequire: route.query.logRequire,
-                filter: route.query.filter
-            }
-        })
-    } else if (['image', 'video', 'pdf', 'document'].includes(props.data.category)) {
-        router.push({
-            name: 'preview',
-            query: {
-                path: props.data.path,
-                logRequire: route.query.logRequire,
-                type: props.data.category
-            }
-        })
-    } else {
-        downloadFile(props.data.path, route.query.logRequire === "true")
-    }
-}
 const remove = () => {
     ElMessageBox.confirm(`确定删除${props.data.name}?`, '确认提示', {
         confirmButtonText: '确定',

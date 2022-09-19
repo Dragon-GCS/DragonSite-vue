@@ -14,6 +14,4 @@
 
 ## TODO
 
-* 批量移动
-* 全选功能
 * 下载文件的window.open没有header

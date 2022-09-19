@@ -64,7 +64,8 @@ export const downloadFile = (full_path: string, login_require: boolean = false) 
 export const previewFile = (full_path: string, login_require: boolean = false) => {
     return axios.get("/api/disk/download", {
         params: { path: full_path, preview: true, login_require },
-        headers: get_tokens()
+        headers: get_tokens(),
+        responseType: "blob"
     }).then((res) => {
         return res.data
     })

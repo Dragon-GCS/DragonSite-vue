@@ -37,6 +37,9 @@ export const token = ref(localStorage.getItem("token") || "")
 export const expiredTime = ref(localStorage.getItem("expired_time") || "")
 export const loginState = ref(false || username.value !== "")
 
+export const previewable = ["image", "video", "audio", "document", "text"]
+export const items = ref<UserData[]>([])
+
 export interface UserData {
     path: string,
     name: string,
