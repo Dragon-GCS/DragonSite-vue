@@ -12,7 +12,7 @@ const pathSrc = resolve(__dirname, 'src')
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: "./",
+  base: "/",
   resolve: {
     alias: {'@': pathSrc},
   },

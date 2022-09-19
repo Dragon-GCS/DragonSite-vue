@@ -10,6 +10,7 @@ from server.models import database, init_db
 app = FastAPI()
 app.include_router(api.router)
 app.mount("/assets", StaticFiles(directory=CONF.DIST_DIR / "assets"), name="assets")
+app.mount("/static", StaticFiles(directory=CONF.DIST_DIR / "static"), name="static")
 
 # CORS for development
 app.add_middleware(

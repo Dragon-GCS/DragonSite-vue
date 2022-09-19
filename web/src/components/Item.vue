@@ -30,14 +30,14 @@ const show = ref(false);
 const imgUrl = ref("");
 
 if (props.data.is_dir) {
-    imgUrl.value = '/assets/folder.png'
+    imgUrl.value = '/static/folder.png'
 } else if (props.data.category === "image") {
     previewFile(props.data.path, route.query.logRequire === "true").then((res) => {
         let blob = window.URL.createObjectURL(new Blob([res]))
         imgUrl.value = blob
     })
 } else {
-    imgUrl.value = `/assets/${props.data.category}.png`
+    imgUrl.value = `/static/${props.data.category}.png`
 }
 const getDisplayName = () => {
     return props.data.name.length > 12 ? props.data.name.slice(0, 6) + '...' + props.data.name.slice(-3) : props.data.name
