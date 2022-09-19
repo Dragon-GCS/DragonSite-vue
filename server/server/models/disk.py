@@ -235,12 +235,15 @@ class UserData(ormar.Model):
         if path == "/":
             raise RootRenameError()
 
-        resource = await cls.objects.get_or_none(path=path, is_dir=is_dir, owner=owner)
+        resource = await cls.objects.select_related("parent").get_or_none(path=path, is_dir=is_dir, owner=owner)
         if not resource:
             raise ResourceNotFound(path)
 
         parent = resource.parent_path
         new_path = f"{parent if parent != '/' else ''}/{new_name}"
+
+        if await cls.objects.filter(path=new_path, is_dir=is_dir, owner=owner).exists():
+            raise FileExistsError(new_path)
 
         if resource.is_dir:
             resource.path = new_path
@@ -278,7 +281,7 @@ class UserData(ormar.Model):
 
         resources = []
         for name, is_dir in zip(names, are_dir):
-            resource = await cls.objects.get_or_none(path=f"{src_path}/{name}",
+            resource = await cls.objects.select_related("parent").get_or_none(path=f"{src_path}/{name}",
                                                      is_dir=is_dir,
                                                      owner=owner)
             if not resource:

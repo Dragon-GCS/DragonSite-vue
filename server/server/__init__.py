@@ -14,7 +14,7 @@ app.mount("/assets", StaticFiles(directory=CONF.DIST_DIR / "assets"), name="asse
 # CORS for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost", "http://localhost:3333"],
+    allow_origins=["http://localhost", "http://localhost:3333", "http://127.0.0.1:3333"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
