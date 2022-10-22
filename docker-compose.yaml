@@ -1,0 +1,27 @@
+version: '3'
+services:
+  web:
+    image: nginx
+    container_name: netdisk
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./dist:/app/dist
+    networks:
+      - netdisk_web
+  server:
+    build: ./
+    container_name: server
+    hostname: server
+    volumes:
+      - ./:/app
+    environment:
+      APPKEY: 1234567890
+      DBNAME: db.sqlite
+    networks:
+      - netdisk_web
+
+networks:
+  netdisk_web:
+    driver: bridge

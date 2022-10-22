@@ -72,15 +72,16 @@ export const downloadFile = (filename: string, full_path: string, login_require:
     })
 }
 
-export const previewFile = (full_path: string, login_require: boolean = false) => {
+export const previewFile = (full_path: string, login_require: boolean = false, thumbnail: boolean = false) => {
     return axios.get("/api/disk/download", {
-        params: { path: full_path, preview: true, login_require },
+        params: { path: full_path, preview: true, login_require, thumbnail},
         headers: get_tokens(),
         responseType: "blob"
     }).then((res) => {
         return res.data
     })
 }
+
 
 export const renameResource = (path: string, target: string, is_dir: boolean, login_require: boolean) => {
     return axios.patch("/api/disk", {}, {

@@ -14,13 +14,13 @@ ROOT = Path(__file__).parent.absolute()
 DATABASE_DIR = ROOT / DBNAME
 DATABASE_URL = f"sqlite:///{DATABASE_DIR}"
 # static files dir
-FILE_DIR = ROOT / "files"
+FILE_DIR = ROOT / "../files"
 FILE_DIR.mkdir(parents=True, exist_ok=True)
 # frontend dist dir
 DIST_DIR = ROOT / "../dist"
 
 # regex for validating file name
-FILENAME_REGEX = r"[^/:<>\\\*\|]"
+FILENAME_REGEX = r"[^/\\:<>\*\|\?\.\"]"
 # regex for validating file path
 FILE_PATH_REGEX = rf"^(/{FILENAME_REGEX}+)+|/$"
 

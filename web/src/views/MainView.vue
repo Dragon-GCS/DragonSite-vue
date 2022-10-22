@@ -104,13 +104,11 @@ const selectAll = () => {
 
 const handlePreview = (idx: number) => {
     let resource = items.value[idx]
-    items.value = items.value.filter((item) => previewable.includes(item.category))
-    idx = items.value.findIndex((item) => item.path === resource.path)
     if (resource.is_dir) {
         router.push({
             name: 'main',
             query: {
-                idx,
+                path: resource.path,
                 logRequire: route.query.logRequire,
                 filter: route.query.filter
             }
@@ -123,6 +121,8 @@ const handlePreview = (idx: number) => {
                 logRequire: route.query.logRequire as string,
             }
         })
+        items.value = items.value.filter((item) => previewable.includes(item.category))
+        idx = items.value.findIndex((item) => item.path === resource.path)
     } else {
         downloadFile(resource.name, resource.path, route.query.logRequire === "true")
     }
@@ -130,8 +130,8 @@ const handlePreview = (idx: number) => {
 
 const newFolder = () => {
     ElMessageBox.prompt("请输入文件夹名称", "新建文件夹", {
-        inputPattern: /^[a-zA-Z0-9_]+$/,
-        inputErrorMessage: "文件夹名称只能包含字母、数字和下划线"
+        inputPattern: /^[^/\\:\?\.\*\"<>|]+$/,
+        inputErrorMessage: "包含非法字符（/\\:?.*<>\"|）"
     }).then(({ value }) => {
         if (!value) { return }
         if (items.value.filter(e => e.name === value).length != 0) {

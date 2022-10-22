@@ -1,11 +1,7 @@
+#!/usr/bin/python3
 import server.cli as cli
 import argparse
 
-def user():
-    pass
-
-def add_user():
-    pass
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Manage users and database(TODO)")

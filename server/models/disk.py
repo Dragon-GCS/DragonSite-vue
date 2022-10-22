@@ -22,10 +22,14 @@ class Digest(ormar.Model):
     digest: str = ormar.String(max_length=32, unique=True)  # type: ignore
 
     @validator("digest")
-    def check_digest(cls, digest):
+    def check_digest(cls, digest: str):
         if len(digest) != 32:
             raise ValueError("digest length must be 32")
         return digest
+
+    @classmethod
+    def check_exist(cls, digest:str) -> bool:
+        return bool(cls.objects.get_or_none(digest=digest))
 
 
 Parent = ForwardRef("UserData")

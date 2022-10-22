@@ -1,14 +1,16 @@
+from io import BytesIO
 from hashlib import md5
 from typing import Dict, List, Optional
 
-import cv2
 from aiofiles import open
 from fastapi import APIRouter, Depends, File, Query, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
+from PIL import Image
 from server.config import FILE_DIR, FILE_PATH_REGEX, FILENAME_REGEX, FileCats
 from server.depends import get_user
 from server.exceptions import ResourceNotFound
 from server.models import UserData
+from server.models.disk import Digest
 from server.models.user import User
 
 router = APIRouter(prefix="/disk", tags=["disk"])
@@ -33,19 +35,20 @@ async def get_resources(path: str = Query(regex=FILE_PATH_REGEX),
 async def download_file(path: str = Query(regex=FILE_PATH_REGEX),
                         user: Optional[User] = Depends(get_user),
                         preview: bool = Query(False,
-                                              description="Whether preview the file")):
+                                              description="Whether preview the file"),
+                        thumbnail: bool = Query(
+                            False, description="Whether return low resolution img")):
     resource = await UserData.objects.select_related("digest").get_or_none(path=path,
                                                                            owner=user)
     if not resource:
         raise ResourceNotFound(path)
 
-    if preview:
-        if resource.category == FileCats.IMAGE:
-            img = cv2.imread(str(resource.get_real_path()))
-            cv2.resize(img, (64, 64))
-            _, buffer = cv2.imencode(".jpg", img)
-            return StreamingResponse(buffer, media_type="image/jpeg")
+    if resource.category == FileCats.IMAGE and thumbnail:
+        bytes_io = BytesIO()
+        Image.open(resource.get_real_path()).resize((64, 64)).save(bytes_io, "JPEG")
+        return StreamingResponse(bytes_io, media_type="image/jpeg")
 
+    if preview:
         async def load():
             async with open(resource.get_real_path(), "rb") as f:
                 async for line in f:
@@ -83,13 +86,14 @@ async def upload_resource(path: str = Query(regex=FILE_PATH_REGEX),
     are_dir = [False] * len(files)
     names, files_size, mime_type, digests = [], [], [], []
     for file in files:
+        content = await file.read()
         names.append(file.filename)
         mime_type.append(file.content_type)
-        content = await file.read()
         files_size.append(len(content))
-        digests.append(md5(content).hexdigest())
-        async with open(FILE_DIR / digests[-1], "wb") as f:
-            await f.write(content)
+        digests.append(digest:=md5(content).hexdigest())
+        if not Digest.check_digest(digest):
+            async with open(FILE_DIR / digests[-1], "wb") as f:
+                await f.write(content)
     return await UserData.create_resources(path, names, are_dir, files_size, mime_type,
                                            digests, user)
 

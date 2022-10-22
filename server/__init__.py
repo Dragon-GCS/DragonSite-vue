@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from server import api
@@ -34,13 +33,3 @@ async def disconnect_db():
     if database.is_connected:
         await database.disconnect()
 
-
-@app.get("/", response_class=RedirectResponse)
-async def index():
-    return RedirectResponse(url="/home")
-
-
-@app.get("/home", response_class=HTMLResponse)
-async def home():
-    with open(CONF.DIST_DIR / "index.html") as f:
-        return HTMLResponse(content=f.read())

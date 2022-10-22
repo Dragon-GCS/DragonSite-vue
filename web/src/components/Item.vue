@@ -17,9 +17,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { ElMessageBox } from 'element-plus';
-import { downloadFile, previewFile } from '../api';
+import { previewFile } from '../api';
 
 const route = useRoute();
 const props = defineProps(["data", "selectedArray", "idx"]);
@@ -31,7 +31,7 @@ const imgUrl = ref("");
 if (props.data.is_dir) {
     imgUrl.value = '/static/folder.png'
 } else if (props.data.category === "image") {
-    previewFile(props.data.path, route.query.logRequire === "true").then((res) => {
+    previewFile(props.data.path, route.query.logRequire === "true", true).then((res) => {
         let blob = window.URL.createObjectURL(new Blob([res]))
         imgUrl.value = blob
     })
