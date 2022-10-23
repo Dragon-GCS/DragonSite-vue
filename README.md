@@ -17,7 +17,7 @@ Vue + Fastapi(py3.9)构建的网盘服务
 
 1. 前端项目构建
 
-    - 在[release]("./release")下载编译好的前端文件，解压根目录下的`dist/`。
+    - 在[release](https://github.com/Dragon-GCS/DragonSite-vue/releases)下载编译好的前端文件，解压根目录下的`dist/`。
     - 本地编译：`cd web && npm install && npm build`。
     > 编译时如果遇到`elementUI`的报错：`Property 'class' does not exist on type 'IntrinsicAttributes'`，打开报错的文件删掉对应的一行代码即可）
 
