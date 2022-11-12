@@ -48,3 +48,8 @@ Vue + Fastapi(py3.9)构建的网盘服务
     - `DEBUG`：开启debug模式
     - `DBNAME`：sqlite数据库文件名，保存在`./server"`目录下
     - `APPKEY`：个人密钥，用于加密用户密码，默认*1234567890*
+
+## TODO
+
+- 支持文件、文件夹移动
+- 增加可预览文件类型，PDF、Markdown、纯文本、Word、Excel、PPT等
