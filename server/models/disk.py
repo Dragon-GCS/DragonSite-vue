@@ -28,8 +28,8 @@ class Digest(ormar.Model):
         return digest
 
     @classmethod
-    def check_exist(cls, digest:str) -> bool:
-        return bool(cls.objects.get_or_none(digest=digest))
+    async def check_exist(cls, digest:str) -> bool:
+        return bool(await cls.objects.get_or_none(digest=digest))
 
 
 Parent = ForwardRef("UserData")

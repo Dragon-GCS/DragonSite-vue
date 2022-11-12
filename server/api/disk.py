@@ -91,7 +91,7 @@ async def upload_resource(path: str = Query(regex=FILE_PATH_REGEX),
         mime_type.append(file.content_type)
         files_size.append(len(content))
         digests.append(digest:=md5(content).hexdigest())
-        if not Digest.check_digest(digest):
+        if not await Digest.check_exist(digest):
             async with open(FILE_DIR / digests[-1], "wb") as f:
                 await f.write(content)
     return await UserData.create_resources(path, names, are_dir, files_size, mime_type,

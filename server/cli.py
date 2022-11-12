@@ -1,6 +1,8 @@
 import asyncio
 
-from server.models import add_user, drop_user
+from server.models import add_user, drop_user, init_db
+
+asyncio.run(init_db())
 
 
 def create_user(username: str, password: str, is_admin: bool):

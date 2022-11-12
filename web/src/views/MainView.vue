@@ -114,6 +114,8 @@ const handlePreview = (idx: number) => {
             }
         })
     } else if (previewable.includes(resource.category)) {
+        items.value = items.value.filter((item) => previewable.includes(item.category))
+        idx = items.value.findIndex((item) => item.path === resource.path)
         router.push({
             name: 'preview',
             query: {
@@ -121,8 +123,6 @@ const handlePreview = (idx: number) => {
                 logRequire: route.query.logRequire as string,
             }
         })
-        items.value = items.value.filter((item) => previewable.includes(item.category))
-        idx = items.value.findIndex((item) => item.path === resource.path)
     } else {
         downloadFile(resource.name, resource.path, route.query.logRequire === "true")
     }
