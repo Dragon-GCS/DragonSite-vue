@@ -1,17 +1,18 @@
 import time
 from typing import Optional
 
-from fastapi import Cookie, Header
+from fastapi import Header
+
 from server.exceptions import AuthError
 from server.models import User
 from server.utils import create_token
 
 
 async def get_user(
-        login_require: bool,
-        token: str = Header(""),
-        username: str = Header(""),
-        expired_time: int = Header(0, convert_underscores=False),
+    login_require: bool,
+    token: str = Header(""),
+    username: str = Header(""),
+    expired_time: int = Header(0, convert_underscores=False),
 ) -> Optional[User]:
     if not login_require:
         return

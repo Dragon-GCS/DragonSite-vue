@@ -32,4 +32,3 @@ async def connect_db():
 async def disconnect_db():
     if database.is_connected:
         await database.disconnect()
-

@@ -3,6 +3,7 @@ from urllib import response
 from server import app
 from fastapi.testclient import TestClient
 
+
 class Test(unittest.TestCase):
     def setUp(self) -> None:
         self.client = TestClient(app)
@@ -19,5 +20,5 @@ class Test(unittest.TestCase):
         print(response.json())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

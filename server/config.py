@@ -29,7 +29,8 @@ COOKIE_MAX_AGE = 60 * 60 * 24 * 7  # 7 days
 
 
 class FileCats(Enum):
-    """ file categories enum"""
+    """file categories enum"""
+
     ALL = "all"
     AUDIO = "audio"
     DOCUMENT = "document"

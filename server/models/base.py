@@ -18,15 +18,9 @@ class BaseMeta(ormar.ModelMeta):
 class BaseConfig:
     anystr_strip_whitespace = True
     fields = {
-        "parent": {
-            "exclude": True
-        },
-        "name": {
-            "exclude": True
-        },
-        "parent_path": {
-            "exclude": True
-        },
+        "parent": {"exclude": True},
+        "name": {"exclude": True},
+        "parent_path": {"exclude": True},
     }
 
 
@@ -36,9 +30,7 @@ class AutoUpdateModified(ormar.QuerySet):
             self.modified_time = datetime.now()
         return await super().update(each, **kwargs)
 
-    async def bulk_update(self,
-                          objects: List[ormar.Model],
-                          columns: List[str] = []) -> None:
+    async def bulk_update(self, objects: List[ormar.Model], columns: List[str] = []) -> None:
         for object in objects:
             if "modified_time" in object.__dict__:
                 object.modified_time = datetime.now()

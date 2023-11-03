@@ -72,18 +72,16 @@ class TestUserData(TestModelBase):
         return await UserData.objects.get(path="/")
 
     async def _test_create(self, path: str, owner: Optional[User] = None):
-        result = await UserData.create_resources(path, self.names, self.are_dir,
-                                                 self.files_size, self.mime_types,
-                                                 self.digests, owner)
+        result = await UserData.create_resources(
+            path, self.names, self.are_dir, self.files_size, self.mime_types, self.digests, owner
+        )
         prefix = "" if path == "/" else path
         for i in range(len(result)):
             resource = result[i]
             self.assertEqual(resource.path, f"{prefix}/{self.names[i]}")
             self.assertEqual(resource.is_dir, self.are_dir[i])
-            self.assertEqual(resource.file_size,
-                             0 if resource.is_dir else self.files_size[i])
-            self.assertEqual(resource.mime_type,
-                             "" if resource.is_dir else self.mime_types[i])
+            self.assertEqual(resource.file_size, 0 if resource.is_dir else self.files_size[i])
+            self.assertEqual(resource.mime_type, "" if resource.is_dir else self.mime_types[i])
             if resource.digest:
                 self.assertEqual(resource.digest.digest, self.digests[i])
             else:
@@ -92,33 +90,37 @@ class TestUserData(TestModelBase):
         self.assertEqual(await parent.children.count(), len(self.names))
         self.assertEqual(parent.file_size, sum(self.files_size))
 
-    async def _test_get(self,
-                        path: str,
-                        category: FileCats = FileCats.ALL,
-                        owner: Optional[User] = None):
+    async def _test_get(
+        self, path: str, category: FileCats = FileCats.ALL, owner: Optional[User] = None
+    ):
         resources = await UserData.get_resources(path, category, owner)
-        result_category = [
-            1 for mime_type in self.mime_types
-            if FileCats.sort_mime_type(mime_type) == category.value
-        ] if category != FileCats.ALL else self.mime_types
+        result_category = (
+            [
+                1
+                for mime_type in self.mime_types
+                if FileCats.sort_mime_type(mime_type) == category.value
+            ]
+            if category != FileCats.ALL
+            else self.mime_types
+        )
         self.assertEqual(len(resources), len(result_category))
 
-    async def _test_rename(self,
-                           path: str,
-                           new_name: str,
-                           is_dir: bool,
-                           owner: Optional[User] = None):
+    async def _test_rename(
+        self, path: str, new_name: str, is_dir: bool, owner: Optional[User] = None
+    ):
         result = await UserData.rename_resource(path, new_name, is_dir, owner)
         parent_path = path.rsplit("/", 1)[0]
         self.assertEqual(result.path, f"{parent_path}/{new_name}")
         self.assertEqual(result.name, new_name)
 
-    async def _test_move(self,
-                         src_path: str,
-                         dst_path: str,
-                         names: List[str],
-                         are_dir: List[bool],
-                         owner: Optional[User] = None):
+    async def _test_move(
+        self,
+        src_path: str,
+        dst_path: str,
+        names: List[str],
+        are_dir: List[bool],
+        owner: Optional[User] = None,
+    ):
         result = await UserData.move_resources(src_path, dst_path, names, are_dir, owner)
         self.assertEqual(len(result), len(names))
         dst = "" if dst_path == "/" else dst_path
@@ -126,10 +128,9 @@ class TestUserData(TestModelBase):
             self.assertEqual(result[i].parent_path, dst_path)
             self.assertEqual(result[i].path, f"{dst}/{names[i]}")
 
-    async def _test_remove(self,
-                           paths: List[str],
-                           are_dir: List[bool],
-                           owner: Optional[User] = None):
+    async def _test_remove(
+        self, paths: List[str], are_dir: List[bool], owner: Optional[User] = None
+    ):
         await UserData.remove_resources(paths, are_dir, owner)
         for path, is_dir in zip(paths, are_dir):
             with self.assertRaises(NoMatch):
@@ -145,13 +146,14 @@ class TestUserData(TestModelBase):
         await self._test_get("/" + self.names[0], FileCats.IMAGE)
         await self._test_get("/", owner=self.user)
 
-        await self._test_move("/" + self.names[0], "/" + self.names[1], self.names[2:],
-                              self.are_dir[2:])
+        await self._test_move(
+            "/" + self.names[0], "/" + self.names[1], self.names[2:], self.are_dir[2:]
+        )
         await self._test_rename("/" + self.names[2], "new_file", self.are_dir[2])
         await self._test_rename("/" + self.names[0], "new_folder", self.are_dir[0])
 
         await self._test_remove(["/" + name for name in self.names], self.are_dir)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

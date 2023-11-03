@@ -1,9 +1,10 @@
 from hashlib import md5
 
 import sqlalchemy
+
 from server.config import DATABASE_DIR, DATABASE_URL
 from server.exceptions import ResourceNotFound
-from server.models.base import database, metadata
+from server.models.base import database, metadata  # noqa: F401
 from server.models.disk import UserData
 from server.models.user import User
 
@@ -13,8 +14,7 @@ async def init_db():
     if DATABASE_DIR.exists():
         return
 
-    engine = sqlalchemy.create_engine(DATABASE_URL,
-                                      connect_args={'check_same_thread': False})
+    engine = sqlalchemy.create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
     metadata.create_all(engine)
     await UserData(path="/", is_dir=True).save()
     print("Initialized database:", DATABASE_DIR)

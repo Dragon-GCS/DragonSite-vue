@@ -5,10 +5,15 @@ from typing import Any, ForwardRef, List, Optional
 import ormar
 from loguru import logger
 from pydantic import validator
-from server.config import FILE_DIR, FILE_PATH_REGEX, FileCats
-from server.exceptions import (ArgsLengthNotEqual, FieldCheckError,
-                               ResourceNotFound, RootRenameError)
 from typing_extensions import Self
+
+from server.config import FILE_DIR, FILE_PATH_REGEX, FileCats
+from server.exceptions import (
+    ArgsLengthNotEqual,
+    FieldCheckError,
+    ResourceNotFound,
+    RootRenameError,
+)
 
 from .base import AutoUpdateModified, BaseConfig, BaseMeta
 from .user import User
@@ -28,7 +33,7 @@ class Digest(ormar.Model):
         return digest
 
     @classmethod
-    async def check_exist(cls, digest:str) -> bool:
+    async def check_exist(cls, digest: str) -> bool:
         return bool(await cls.objects.get_or_none(digest=digest))
 
 
@@ -47,6 +52,7 @@ class UserData(ormar.Model):
         owner: user who owns the file.
         parent: parent UserData of the file, only '/' is root.
     """
+
     class Meta(BaseMeta):
         tablename = "user_data"
         queryset_class = AutoUpdateModified
@@ -57,24 +63,21 @@ class UserData(ormar.Model):
     id: int = ormar.Integer(primary_key=True)  # type: ignore
     path: str = ormar.String(max_length=1024, regex=FILE_PATH_REGEX)  # type: ignore
     is_dir: bool = ormar.Boolean()
-    category: str = ormar.String(default=FileCats.NONE.value,
-                                 max_length=20,
-                                 choices=list(FileCats))  # type: ignore
+    category: str = ormar.String(default=FileCats.NONE.value, max_length=20, choices=list(FileCats))  # type: ignore
     mime_type: str = ormar.String(default="", max_length=80)  # type: ignore
     create_time: datetime = ormar.DateTime(default=datetime.now)  # type: ignore
     modified_time: datetime = ormar.DateTime(default=datetime.now)  # type: ignore
     file_size: int = ormar.Integer(default=0)  # type: ignore
 
-    digest: Optional[Digest] = ormar.ForeignKey(Digest,
-                                                ondelete="CASCADE",
-                                                nullable=True,
-                                                related_name="files")
-    owner: Optional[User] = ormar.ForeignKey(User,
-                                             ondelete="CASCADE",
-                                             nullable=True,
-                                             related_name="data")
+    digest: Optional[Digest] = ormar.ForeignKey(
+        Digest, ondelete="CASCADE", nullable=True, related_name="files"
+    )
+    owner: Optional[User] = ormar.ForeignKey(
+        User, ondelete="CASCADE", nullable=True, related_name="data"
+    )
     parent: Optional[Parent] = ormar.ForeignKey(  # type: ignore
-        Parent, ondelete="CASCADE", related_name="children")
+        Parent, ondelete="CASCADE", related_name="children"
+    )
 
     @ormar.property_field
     def name(self) -> str:
@@ -112,14 +115,16 @@ class UserData(ormar.Model):
         return await super().update(_columns, **kwargs)
 
     @classmethod
-    async def create_resources(cls,
-                               path: str,
-                               names: List[str],
-                               are_dir: List[bool],
-                               files_size: List[int] = [0],
-                               mime_types: List[str] = [""],
-                               digests: List[str] = [""],
-                               user: Optional[User] = None) -> List[Self]:
+    async def create_resources(
+        cls,
+        path: str,
+        names: List[str],
+        are_dir: List[bool],
+        files_size: List[int] = [0],
+        mime_types: List[str] = [""],
+        digests: List[str] = [""],
+        user: Optional[User] = None,
+    ) -> List[Self]:
         """Create user's resources under specified path with name, is_dir, file_size, mime_type, digest.
 
         Args:
@@ -133,11 +138,11 @@ class UserData(ormar.Model):
         Returns:
             The list of created resources.
         """
-        if not (len(names) == len(are_dir) == len(files_size) == len(mime_types) ==
-                len(digests)):
+        if not (len(names) == len(are_dir) == len(files_size) == len(mime_types) == len(digests)):
             raise ArgsLengthNotEqual(
                 ["name", "is_dir", "file_size", "mime_type", "digest"],
-                [names, are_dir, files_size, mime_types, digests])
+                [names, are_dir, files_size, mime_types, digests],
+            )
 
         if not all(names):
             raise FieldCheckError("UserData.name", names)
@@ -151,8 +156,9 @@ class UserData(ormar.Model):
 
         resources: List[UserData] = []
         creates: List[UserData] = []
-        for name, is_dir, file_size, mime_type, digest in zip(names, are_dir, files_size,
-                                                              mime_types, digests):
+        for name, is_dir, file_size, mime_type, digest in zip(
+            names, are_dir, files_size, mime_types, digests
+        ):
             if not is_dir and not all((file_size, mime_type, digest)):
                 logger.debug(
                     f"File<{name}>'s size[{file_size}], mime_type[{mime_type}], digest[{digest}] cannot be empty."
@@ -167,21 +173,24 @@ class UserData(ormar.Model):
             resource_path = f"{path}/{name}"
             # load parent model to avoid field check error in response
             resource = await cls.objects.select_related("parent").get_or_none(
-                path=resource_path, is_dir=is_dir, owner=user)
+                path=resource_path, is_dir=is_dir, owner=user
+            )
 
             if resource is not None:
                 parent.file_size += resource.file_size
                 logger.info(f"Resource<{path}/{name}> already exists.")
             else:
                 parent.file_size += file_size
-                resource = UserData(path=resource_path,
-                                    is_dir=is_dir,
-                                    category=FileCats.sort_mime_type(mime_type),
-                                    mime_type=mime_type,
-                                    file_size=file_size,
-                                    digest=digest,
-                                    owner=user,
-                                    parent=parent)
+                resource = UserData(
+                    path=resource_path,
+                    is_dir=is_dir,
+                    category=FileCats.sort_mime_type(mime_type),
+                    mime_type=mime_type,
+                    file_size=file_size,
+                    digest=digest,
+                    owner=user,
+                    parent=parent,
+                )
                 creates.append(resource)
             resources.append(resource)
         if creates:
@@ -191,10 +200,9 @@ class UserData(ormar.Model):
         return resources
 
     @classmethod
-    async def get_resources(cls,
-                            path: str,
-                            category: FileCats = FileCats.ALL,
-                            owner: Optional[User] = None) -> List[Self]:
+    async def get_resources(
+        cls, path: str, category: FileCats = FileCats.ALL, owner: Optional[User] = None
+    ) -> List[Self]:
         """Get resource with specified path and owner."""
         parent = await cls.objects.get_or_none(path=path, owner=owner)
         if not parent:
@@ -205,17 +213,17 @@ class UserData(ormar.Model):
         return await filters.all()
 
     @classmethod
-    async def remove_resources(cls,
-                               paths: List[str],
-                               are_dir: List[bool],
-                               owner: Optional[User] = None):
+    async def remove_resources(
+        cls, paths: List[str], are_dir: List[bool], owner: Optional[User] = None
+    ):
         """Remove resource with specified path and owner."""
         if len(paths) != len(are_dir):
             raise ArgsLengthNotEqual(["path", "is_dir"], [paths, are_dir])
 
         for path, is_dir in zip(paths, are_dir):
             resource = await cls.objects.select_related("digest").get_or_none(
-                path=path, is_dir=is_dir, owner=owner)
+                path=path, is_dir=is_dir, owner=owner
+            )
             if not resource:
                 continue
             if resource.digest and len(resource.digest.files) == 1:
@@ -227,11 +235,9 @@ class UserData(ormar.Model):
             logger.success(f"Resource<{path}> removed.")
 
     @classmethod
-    async def rename_resource(cls,
-                              path: str,
-                              new_name: str,
-                              is_dir: bool,
-                              owner: Optional[User] = None) -> Self:
+    async def rename_resource(
+        cls, path: str, new_name: str, is_dir: bool, owner: Optional[User] = None
+    ) -> Self:
         """Rename resource with specified path and owner."""
         if not new_name:
             raise FieldCheckError("UserData.name", new_name)
@@ -239,7 +245,9 @@ class UserData(ormar.Model):
         if path == "/":
             raise RootRenameError()
 
-        resource = await cls.objects.select_related("parent").get_or_none(path=path, is_dir=is_dir, owner=owner)
+        resource = await cls.objects.select_related("parent").get_or_none(
+            path=path, is_dir=is_dir, owner=owner
+        )
         if not resource:
             raise ResourceNotFound(path)
 
@@ -252,9 +260,8 @@ class UserData(ormar.Model):
         if resource.is_dir:
             resource.path = new_path
             sub_resources = [resource]
-            for r in await cls.objects.filter(path__startswith=path + "/",
-                                              owner=owner).all():
-                r.path = new_path + r.path[len(path):]
+            for r in await cls.objects.filter(path__startswith=path + "/", owner=owner).all():
+                r.path = new_path + r.path[len(path) :]
                 sub_resources.append(r)
             await cls.objects.bulk_update(sub_resources)
         else:
@@ -263,12 +270,14 @@ class UserData(ormar.Model):
         return resource
 
     @classmethod
-    async def move_resources(cls,
-                             src_path: str,
-                             dst_path: str,
-                             names: List[str],
-                             are_dir: List[bool],
-                             owner: Optional[User] = None) -> List[Self]:
+    async def move_resources(
+        cls,
+        src_path: str,
+        dst_path: str,
+        names: List[str],
+        are_dir: List[bool],
+        owner: Optional[User] = None,
+    ) -> List[Self]:
         """Move src to dst when names was not given, otherwise move name form src to dst"""
         if len(names) != len(are_dir):
             raise ArgsLengthNotEqual(["name", "is_dir"], [names, are_dir])
@@ -285,14 +294,14 @@ class UserData(ormar.Model):
 
         resources = []
         for name, is_dir in zip(names, are_dir):
-            resource = await cls.objects.select_related("parent").get_or_none(path=f"{src_path}/{name}",
-                                                     is_dir=is_dir,
-                                                     owner=owner)
+            resource = await cls.objects.select_related("parent").get_or_none(
+                path=f"{src_path}/{name}", is_dir=is_dir, owner=owner
+            )
             if not resource:
                 continue
-            dst_resource = await cls.objects.get_or_none(path=f"{dst_path}/{name}",
-                                                         is_dir=is_dir,
-                                                         owner=owner)
+            dst_resource = await cls.objects.get_or_none(
+                path=f"{dst_path}/{name}", is_dir=is_dir, owner=owner
+            )
             if dst_resource:
                 resources.append(dst_resource)
                 continue
