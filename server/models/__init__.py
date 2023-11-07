@@ -1,23 +1,29 @@
-from hashlib import md5
-
 import sqlalchemy
-from server.config import DATABASE_DIR, DATABASE_URL
+from loguru import logger
+
+from server.config import DATABASE_URL
 from server.exceptions import ResourceNotFound
-from server.models.base import database, metadata
-from server.models.disk import UserData
-from server.models.user import User
+
+from .base import database, metadata  # noqa: F401
+from .disk import FileInfo, UserData  # noqa: F401
+from .user import User
 
 
 async def init_db():
     """Initialize the database."""
-    if DATABASE_DIR.exists():
-        return
 
-    engine = sqlalchemy.create_engine(DATABASE_URL,
-                                      connect_args={'check_same_thread': False})
+    connect_args = {}
+    if DATABASE_URL.startswith("sqlite"):
+        import sqlite3
+        import uuid
+
+        sqlite3.register_adapter(uuid.UUID, lambda u: u.hex)
+        connect_args["check_same_thread"] = False
+
+    engine = sqlalchemy.create_engine(DATABASE_URL, connect_args=connect_args)
     metadata.create_all(engine)
-    await UserData(path="/", is_dir=True).save()
-    print("Initialized database:", DATABASE_DIR)
+    await UserData.objects.get_or_create(name="/", is_dir=True, owner=None)
+    logger.info("Initialized database: " + DATABASE_URL)
 
 
 async def add_user(username: str, password: str, is_admin: bool = False) -> User:
@@ -34,12 +40,10 @@ async def add_user(username: str, password: str, is_admin: bool = False) -> User
     if is_admin and admin and admin.username != username:
         raise ValueError(f"Only one admin<{admin.username}> user allowed.")
 
-    password = md5(password.encode("utf-8")).hexdigest()
     user = await User.objects.get_or_none(username=username)
     if user is None:
         user = User(username=username, password=password, is_admin=is_admin)
-        await user.save()
-        await UserData(path="/", is_dir=True, owner=user).save()
+        await UserData(name="/", is_dir=True, owner=user).save_related()
     else:
         await user.update(password=password, is_admin=is_admin)
 

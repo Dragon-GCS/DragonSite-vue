@@ -1,5 +1,5 @@
-import os
 import argparse
+import os
 
 import uvicorn
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -26,17 +26,10 @@ async def preview():
     return RedirectResponse(url="/")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-b", "--bind", default="0.0.0.0")
     parser.add_argument("-p", "--port", default=8000, type=int)
     args = parser.parse_args()
 
-    if not os.getenv("APPKEY"):
-        os.environ["APPKEY"] = "1234567890"
-        logger.warning(f"APPKEY not set, using default {os.getenv('APPKEY')}")
-
-    uvicorn.run(app="server:app",
-                host=args.bind,
-                port=args.port,
-                reload=bool(os.getenv("DEBUG")))
+    uvicorn.run(app="server:app", host=args.bind, port=args.port, reload=bool(os.getenv("DEBUG")))

@@ -17,8 +17,8 @@ services:
     volumes:
       - ./:/app
     environment:
-      APPKEY: 1234567890
-      DBNAME: db.sqlite
+      APP_KEY: 1234567890
+      DATABASE_URL: sqlite:///db.sqlite
     networks:
       - netdisk_web
 
