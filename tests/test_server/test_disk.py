@@ -44,9 +44,7 @@ class TestDisk(unittest.IsolatedAsyncioTestCase):
             name="test.txt", owner=TEST_USER, is_dir=False, meta=meta, parent=self.private_root
         ).save()
         # list resources
-        response = self.client.get(
-            "resources", params={"path": self.private_root.id.hex, "login_require": True}
-        )
+        response = self.client.get("resources", params={"login_require": True})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()), 2)
 
@@ -55,26 +53,18 @@ class TestDisk(unittest.IsolatedAsyncioTestCase):
             compare_resource = fake_folder if return_resource.is_dir else fake_file
             self.assertEqual(return_resource, Resource(**compare_resource.dict()))
         # list resources in public root
-        self.assertEqual(
-            self.client.get("resources", params={"path": self.public_root.id.hex}).json(), []
-        )
+        self.assertEqual(self.client.get("resources").json(), [])
         # list resources with category
         response = self.client.get(
             "resources",
-            params={
-                "path": self.private_root.id.hex,
-                "login_require": True,
-                "category": FileTypeEnum.TEXT.value,
-            },
+            params={"login_require": True, "category": FileTypeEnum.TEXT.value},
         ).json()
         self.assertEqual(len(response), 1)
         self.assertEqual(Resource(**response[0]), Resource(**fake_file.dict()))
 
     @database.transaction(force_rollback=True)
     async def test_create_folder(self):
-        response = self.client.post(
-            "resources", params={"path": self.public_root.id.hex, "name": "test_dir"}
-        )
+        response = self.client.post("resources", params={"name": "test_dir"})
         self.assertEqual(response.status_code, 200)
         self.assertTrue(
             await UserData.objects.filter(
@@ -86,7 +76,7 @@ class TestDisk(unittest.IsolatedAsyncioTestCase):
     async def test_create_file(self):
         response = self.client.post(
             "resources",
-            params={"path": self.private_root.id.hex, "login_require": True},
+            params={"login_require": True},
             files={"files": ("test.txt", b"test")},
         )
         self.assertEqual(response.status_code, 200)
@@ -115,11 +105,7 @@ class TestDisk(unittest.IsolatedAsyncioTestCase):
         # delete the fake data
         response = self.client.delete(
             "resources",
-            params={
-                "path": self.private_root.id.hex,
-                "names": ["test", "test.txt"],
-                "login_require": True,
-            },
+            params={"names": ["test", "test.txt"], "login_require": True},
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()), 0)
@@ -138,7 +124,7 @@ class TestDisk(unittest.IsolatedAsyncioTestCase):
     @database.transaction(force_rollback=True)
     async def test_modify_resource(self):
         # create fake data
-        self.client.post("resources", params={"path": self.private_root.id.hex, "name": "test1"})
+        self.client.post("resources", params={"name": "test1"})
         folder = await UserData(
             name="test1", owner=TEST_USER, is_dir=True, parent=self.private_root
         ).save()
@@ -155,7 +141,7 @@ class TestDisk(unittest.IsolatedAsyncioTestCase):
                 "src": [folder.id.hex, file.id.hex],
                 "names": ["new_test1", "new_file1.txt"],
             },
-            params={"path": self.private_root.id.hex, "login_require": True},
+            params={"login_require": True},
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()), 2)
@@ -189,7 +175,7 @@ class TestDisk(unittest.IsolatedAsyncioTestCase):
             image = f.read()
         response = self.client.post(
             "resources",
-            params={"path": self.private_root.id.hex, "login_require": True},
+            params={"login_require": True},
             files={"files": (file_path.name, image)},
         )
         file = await UserData.objects.get(

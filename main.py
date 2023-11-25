@@ -3,7 +3,6 @@ import os
 
 import uvicorn
 from fastapi.responses import HTMLResponse, RedirectResponse
-from loguru import logger
 
 from server import app
 from server import config as CONF
