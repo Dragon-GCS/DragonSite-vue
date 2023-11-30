@@ -1,12 +1,33 @@
-from fastapi import FastAPI
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from loguru import logger
 
 from server import api
 from server import config as CONF
+from server.exceptions import BaseException
 from server.models import database, init_db
 
-app = FastAPI()
+if CONF.APP_KEY == CONF.DEFAULT_APP_KEY:
+    logger.warning(
+        f"Default app_key({CONF.APP_KEY}) is not safe, please change it in config.py or env"
+    )
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    if not database.is_connected:
+        await database.connect()
+    await init_db()
+    yield
+    if database.is_connected:
+        await database.disconnect()
+
+
+app = FastAPI(lifespan=lifespan)
 app.include_router(api.router)
 app.mount("/assets", StaticFiles(directory=CONF.DIST_DIR / "assets"), name="assets")
 app.mount("/static", StaticFiles(directory=CONF.DIST_DIR / "static"), name="static")
@@ -21,14 +42,11 @@ app.add_middleware(
 )
 
 
-@app.on_event("startup")
-async def connect_db():
-    if not database.is_connected:
-        await database.connect()
-    await init_db()
+@app.exception_handler(BaseException)
+def handle_base_exception(request: Request, exc: BaseException):
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 
-@app.on_event("shutdown")
-async def disconnect_db():
-    if database.is_connected:
-        await database.disconnect()
+@app.exception_handler(AssertionError)
+def handle_assertion_error(request: Request, exc: AssertionError):
+    return JSONResponse(status_code=400, content={"detail": str(exc)})

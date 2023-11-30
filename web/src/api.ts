@@ -1,124 +1,124 @@
-import axios from "axios"
-import { UserData, loginState, username as user } from "./config"
+import qs from 'qs';
+import router from './router'
+import { getCookie } from './utils';
+import { UserData } from './config';
+import { state } from './states';
 
-export const get_tokens = () => {
-    return {
-        token: localStorage.getItem("token") || "",
-        username: localStorage.getItem("username") || "",
-        expired_time: localStorage.getItem("expired_time") || 0
+
+const request = async (
+    path: string,
+    method: string,
+    params?: any,
+    body?: FormData | string
+) => {
+    if (params && !(params.path)) { delete params.path }
+    const searchParams = new URLSearchParams(window.location.search)
+    const personal = searchParams.get('personal') === 'true'
+
+    const url = `${path}?${qs.stringify({ ...params, personal }, { arrayFormat: 'repeat' })}`;
+    const headers = new Headers();
+    if (method !== 'GET' && typeof body === 'string') {
+        headers.append('Content-Type', 'application/json');
     }
+    let resp = await fetch(url, { headers, method, body })
+
+    const isJson = resp.headers.get('Content-Type')?.includes('application/json')
+    if (resp.ok) { return isJson ? await resp.json() : resp }
+
+    const detail = isJson ? (await resp.json()).detail : await resp.text() || resp.statusText
+
+    ElMessage.error(detail);
+    console.log(resp.status, resp.statusText);
+
+    if (resp.status === 401) { router.push('/login') }
+    else {router.push('/notfound')}
+    return {}
 }
 
 export const loadResource = async (
     path: string,
-    login_require: boolean,
-    category: string) => {
-    return axios.get("/api/disk", {
-        params: { path, login_require, category },
-        headers: get_tokens()
-    }).then((res) => {
-        return res
-    }, (err) => {
-        console.log("err", err)
-        return err
-    })
+    category: string
+): Promise<UserData[]> => {
+    return await request('/api/disk/resources', 'GET', { path, category })
 }
 
 export const removeResource = async (
     path: string,
-    name: string[],
-    is_dir: boolean[],
-    login_require: boolean,
+    names: string[],
 ) => {
-    return axios.delete("/api/disk", {
-        params: { path, login_require, name, is_dir },
-        headers: get_tokens()
-
-    }).then((res) => {
-        return res
-    }).catch((err) => {
-        return err
-    })
+    return await request('/api/disk/resources', 'DELETE', { path, names })
+}
+export const renameResource = async (
+    path: string,
+    src: string,
+    name: string,
+): Promise<UserData[]> => {
+    return await request(
+        '/api/disk/resources',
+        'PATCH',
+        { path },
+        JSON.stringify({ src: [src], names: [name] })
+    )
 }
 
 export const createFolder = async (
     path: string,
     name: string,
-    login_require: boolean): Promise<UserData[]> => {
-    return axios.post(`/api/disk`, {}, {
-        params: {
-            path: path,
-            name: name,
-            login_require: login_require
-        },
-        headers: get_tokens()
-    }).then((res) => {
-        return res.data
-    })
+): Promise<UserData[]> => {
+    return await request('/api/disk/resources', 'POST', { path, name })
 }
 
-export const downloadFile = (filename: string, full_path: string, login_require: boolean = false) => {
-    return axios.get("/api/disk/download", {
-        params: { path: full_path, preview: false, login_require },
-        headers: get_tokens(),
-    }).then((res) => {
-        var a = document.createElement('a')
-        a.href = URL.createObjectURL(new Blob([res.data]))
-        a.style.display = 'none'
-        a.setAttribute('download', filename)
-        document.body.appendChild(a)
-        a.click()
-        URL.revokeObjectURL(a.href)
-    })
+type Folder = { name: string, id: string, parent: { name: string, id: string }[] }
+export const currentPaths = async () => {
+    const searchParams = new URLSearchParams(window.location.search)
+    const path = searchParams.get('path') || ''
+    const folder: Folder = await request('/api/disk/item', 'GET', { path, parents: true })
+    const paths = [{ name: folder.name, id: folder.id }]
+    if (folder.parent instanceof Array) { paths.unshift(...folder.parent.reverse()) }
+    paths[0].name = 'Home'
+    return paths
 }
 
-export const previewFile = (full_path: string, login_require: boolean = false, thumbnail: boolean = false) => {
-    return axios.get("/api/disk/download", {
-        params: { path: full_path, preview: true, login_require, thumbnail},
-        headers: get_tokens(),
-        responseType: "blob"
-    }).then((res) => {
-        return res.data
-    })
+export const downloadFile = async (
+    filename: string,
+    path: string,
+) => {
+    const res = await request('/api/disk/item', 'GET', { path, preview: false })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(await res.blob())
+    a.style.display = 'none'
+    a.setAttribute('download', filename)
+    document.body.appendChild(a)
+    a.click()
+    URL.revokeObjectURL(a.href)
 }
 
-
-export const renameResource = (path: string, target: string, is_dir: boolean, login_require: boolean) => {
-    return axios.patch("/api/disk", {}, {
-        params: { path, target, is_dir, login_require },
-        headers: get_tokens()
-    }).then((res) => {
-        return res.data
-    })
+export const previewFile = async (
+    path: string,
+    thumbnail: boolean = false
+): Promise<{ type: string, name: string, res: Blob }> => {
+    const res = await request('/api/disk/item', 'GET', { path, preview: true, thumbnail })
+    const name = res.headers.get('Content-Disposition')?.split('filename=')[1] || ''
+    const type = res.headers.get('Content-Type')?.split('/')[0] || ''
+    return { type, name, res: await res.blob() }
 }
 
-export const login = (username: string, password: string) => {
-    const params = new URLSearchParams();
-    params.append('username', username);
-    params.append('password', password);
-    return axios.post(
-        "/api/auth/login",
-        params,
-    ).then((res) => {
-        if (res.status === 200) {
-            localStorage.setItem("token", res.data.token)
-            localStorage.setItem("username", res.data.username)
-            localStorage.setItem("expired_time", res.data.expired_time)
-            loginState.value = true
-            user.value = res.data.username
-            return true
-        }
-    })
+const loadState = () => {
+    state.token = getCookie('token')
+    state.username = getCookie('username')
+    state.expiredTime = getCookie('expiredTime')
 }
 
-export const logout = () => {
-    // return axios.post("/api/auth/logout").then((res) => {
-    //     if res.
-    //     return res
-    // })
-    localStorage.removeItem("token")
-    localStorage.removeItem("username")
-    localStorage.removeItem("expired_time")
-    loginState.value = false
-    user.value = ""
+export const login = async (username: string, password: string) => {
+    const form = new FormData()
+    form.append('username', username)
+    form.append('password', password)
+    await request('/api/auth/login', 'POST', {}, form)
+    loadState()
+}
+
+export const logout = async () => {
+    console.log('logout');
+    await request('/api/auth/logout', 'POST')
+    loadState()
 }

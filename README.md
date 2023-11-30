@@ -41,12 +41,13 @@ Vue + Fastapi(py3.9)构建的网盘服务
 
     - 前端配置在`./web/src/config.ts`中，后端配置在`./server/config.py`
     - DEBUG模式（目前开启时无法代理前端文件，将`main.py`中的路由复制到`server/__init__.py`中可以正常代理前端路由）：设置环境变量`DEBUG`为任意值开启uvicorn的debug模式
-    - 本项目使用sqlite作为数据，使用环境变量`DBNAME`配置数据库文件名，默认为`db.sqlite3`，debug模式会使用`test.sqlite`
+    - 本项目使用orm，使用环境变量`DATABASE_URL`配置数据库连接，默认为`sqlite3:///<root>/db.sqlite`，debug模式会使用`test.sqlite`
+    - 使用其他数据库需要安装相应的后端，目前`ormar`支持`ormar[postgresql]`、`ormar[mysql]`和`ormar[sqlite]`（默认）
     - 所有上传的文件保存在根目录下`files`文件中
 
 6. 环境变量
     - `DEBUG`：开启debug模式
-    - `DBNAME`：sqlite数据库文件名，保存在`./server"`目录下
+    - `DATABASE_URL`：数据库url，默认为`sqlite:///<root>/db.sqlite`
     - `APP_KEY`：个人密钥，用于加密用户密码，默认*1234567890*
 
 ## TODO

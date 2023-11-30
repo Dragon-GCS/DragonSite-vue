@@ -18,7 +18,7 @@ services:
       - ./:/app
     environment:
       APP_KEY: 1234567890
-      DBNAME: db.sqlite
+      DATABASE_URL: sqlite:///db.sqlite
     networks:
       - netdisk_web
 
