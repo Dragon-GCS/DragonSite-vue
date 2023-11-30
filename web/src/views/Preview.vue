@@ -1,66 +1,44 @@
 <template>
     <div id="content">
-        <img v-if="type==='image'" :src="blob" class="content" />
-        <video v-else-if="type==='video'" :src="blob" controls class="content" />
+        <img v-if="type === 'image'" :src="blob" class="content" />
+        <video v-else-if="type === 'video'" :src="blob" controls class="content" />
         <div v-else>
             Not support
         </div>
-        <h2>
-        {{ files[idx].name }}
-        </h2>
+        <h2> {{ decodeURI(name) }} </h2>
         <div class="controls">
-            <el-button type="primary" @click="prevFile" :disabled="idx <= 0">Previous</el-button>
-            <el-button type="primary" @click="download">Download</el-button>
-            <el-button type="primary" @click="nextFile" :disabled="idx >= (files.length - 1)">Next</el-button>
+            <el-button type="primary" @click="move(index - 1)" :disabled="!items[index - 1]">Previous</el-button>
+            <el-button type="primary"
+                @click="downloadFile(name, path as string)">Download</el-button>
+            <el-button type="primary" @click="move(index + 1)" :disabled="!items[index + 1]">Next</el-button>
         </div>
     </div>
-
 </template>
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
 import { previewFile, downloadFile } from '../api';
-import { items } from '../config';
+import { items } from '../states';
 
 const route = useRoute();
 const router = useRouter()
 
-const idx = Number.parseInt(route.query.idx as string);
-const type = items.value[idx].category;
-const files = items.value
+const { path, personal, idx } = route.query
+const index = Number.parseInt(idx as string)
 
-const blob = ref("")
-previewFile(files[idx].path as string, route.query.logRequire === "true").then((res) => {
-    blob.value = URL.createObjectURL(new Blob([res]))
-})
+const { type, name, res } = await previewFile(path as string)
+const blob = window.URL.createObjectURL(res)
 
-const download = () => {
-    downloadFile(files[idx].name, files[idx].path as string, route.query.logRequire === "true")
-}
-const prevFile = () => {
-    if (idx <= 0) { return }
+const move = (nex_idx: number) => {
+    if (!items.value[nex_idx]) { return }
     router.push({
         name: 'preview',
         query: {
-            idx: idx - 1,
-            logRequire: route.query.logRequire as string,
+            path: items.value[nex_idx].id,
+            idx: nex_idx,
+            personal: personal as string,
         }
     })
-    window.URL.revokeObjectURL(blob.value)
+    window.URL.revokeObjectURL(blob)
 }
-
-const nextFile = () => {
-    if (idx >= (files.length - 1)) { return }
-    router.push({
-        name: 'preview',
-        query: {
-            idx: idx + 1,
-            logRequire: route.query.logRequire as string,
-        }
-    })
-    window.URL.revokeObjectURL(blob.value)
-}
-
 </script>
 
 <style>

@@ -20,12 +20,14 @@ export default defineConfig({
     vue(),
     AutoImport({
       resolvers: [ElementPlusResolver()],
+      imports: ['vue', 'vue-router'],
       dts: resolve(pathSrc, 'auto-imports.d.ts'),
     }),
     Components({
       resolvers: [ElementPlusResolver()],
+      dts: resolve(pathSrc, 'components.d.ts'),
     }),
-    ElementPlus(),
+    ElementPlus({}),
     UnoCSS({
       presets: [
         UnocssIcons({

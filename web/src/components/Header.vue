@@ -1,25 +1,25 @@
 <template>
-    <el-button @click="goHome" :link="true">
-        <h1>{{ siteName }}</h1>
-    </el-button>
+    <router-link to="/">
+        <el-button :link="true">
+            <h1>{{ siteName }}</h1>
+        </el-button>
+    </router-link>
 
-    <el-button v-if="!loginState" @click="login" auto-insert-space>登录</el-button>
-    <h1 v-else @click="logout" style="cursor:pointer">Welcome {{ username }}</h1>
+    <router-link to="/login">
+        <h1 v-if="state.token" style="cursor:pointer;">
+            Welcome {{ state.username }}
+        </h1>
+        <el-button v-else auto-insert-space>登录</el-button>
+    </router-link>
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-import { loginState, username } from '../config'
-import { logout as logoutApi } from '../api'
-
-defineProps({ "siteName": String })
-defineEmits(["pointerenter", "pointerleave"])
-
-const router = useRouter()
-const login = () => router.push({ path: '/login' }) 
-const goHome = () => router.push({ path: '/'})
-const logout = () => {
-    logoutApi()
-    router.push({ path: '/'})
-}
+import { siteName } from '../config'
+import { state } from '../states'
 </script>
+
+<style scoped>
+a:visited {
+    color: #409eff;
+}
+</style>
