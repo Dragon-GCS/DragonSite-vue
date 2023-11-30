@@ -8,12 +8,12 @@ from server.models import User
 
 
 async def get_user(
-    login_require: bool = False,
+    personal: bool = False,
     token: Annotated[str, Cookie()] = "",
     username: Annotated[str, Cookie()] = "",
     expired_time: Annotated[int, Cookie()] = 0,
 ) -> Optional[User]:
-    if not login_require:
+    if not personal:
         return
     if int(time.time()) > expired_time:
         raise InvalidLogin("Authentication expired")

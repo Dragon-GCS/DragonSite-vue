@@ -2,6 +2,7 @@ import asyncio
 from hashlib import md5
 from io import BytesIO
 from typing import List
+from urllib.parse import quote
 from uuid import UUID
 
 from aiofiles import open
@@ -32,21 +33,38 @@ async def get_resources(
     return await UserData.objects.filter(**filter_).select_related(["meta", "parent"]).all()
 
 
-@router.get("/download")
+@router.get("/item")
 async def download_file(
     resource: Annotated[UserData, Depends(load_user_data)],
     preview: bool = Query(False, description="Will return a stream response"),
     thumbnail: bool = Query(False, description="Whether return low resolution img"),
+    parents: bool = Query(False, description="Whether return parent paths"),
 ):
-    await resource.load_all(exclude=["parent", "owner"])
+    await resource.load_all()
+    if resource.is_dir:
+        if not parents:
+            return Resource.parse_obj(resource)
+        return_obj = resource.dict()
+        return_obj["parent"] = []
+        while resource.parent:
+            return_obj["parent"].append(resource.parent)
+            resource = await UserData.objects.select_related("parent").get(id=resource.parent.id)
+        return Resource.parse_obj(return_obj)
+
     assert resource.meta, f"Resource({resource}) without meta"
     mime_type = resource.meta.mime_type
+    filename = quote(resource.name)
     if resource.meta.category == FileTypeEnum.IMAGE and thumbnail:
         buffer = BytesIO()
         Image.open(resource.real_path).resize(THUMBNAIL_SIZE).save(buffer, mime_type.split("/")[-1])
         buffer.seek(0)
         return StreamingResponse(
-            buffer, media_type=mime_type, headers={"Content-Length": str(len(buffer.getvalue()))}
+            buffer,
+            media_type=mime_type,
+            headers={
+                "Content-Length": str(len(buffer.getvalue())),
+                "Content-Disposition": f"attachment; filename={filename}",
+            },
         )
 
     if preview:
@@ -57,10 +75,15 @@ async def download_file(
                     yield line
 
         return StreamingResponse(
-            load(), media_type=mime_type, headers={"Content-Length": str(resource.meta.size)}
+            load(),
+            media_type=mime_type,
+            headers={
+                "Content-Length": str(resource.meta.size),
+                "Content-Disposition": f"attachment; filename={filename}",
+            },
         )
 
-    return FileResponse(resource.real_path, media_type=mime_type, filename=str(resource.name))
+    return FileResponse(resource.real_path, media_type=mime_type, filename=filename)
 
 
 @router.post(
@@ -75,7 +98,9 @@ async def create_resource(
         raise InvalidRequest("Cannot create folder and file at the same time")
 
     if name is not None:
-        if await UserData.objects.filter(name=name, owner=folder.owner, is_dir=True).exists():
+        if await UserData.objects.filter(
+            name=name, owner=folder.owner, parent=folder, is_dir=True
+        ).exists():
             raise ResourceAlreadyExists(name)
 
         folder = await UserData(name=name, owner=folder.owner, parent=folder, is_dir=True).save()
@@ -126,7 +151,7 @@ async def delete_resources(
 ):
     """Remove resource with specified path and owner."""
     resources = (
-        await UserData.objects.prefetch_related("meta")
+        await UserData.objects.prefetch_related(["meta", "parent"])
         .filter(parent=folder, owner=folder.owner)
         .all()
     )
@@ -151,6 +176,13 @@ async def modify_resource(
 ) -> List[UserData]:
     if len(src) != len(names):
         raise InvalidRequest("The length of path and name should be equal")
+
+    if exists := await UserData.objects.filter(owner=target.owner, name__in=names).all():
+        raise ResourceAlreadyExists(", ".join(r.name for r in exists))
+
+    if len(names) != len(set(names)):
+        raise InvalidRequest("Cannot rename to the same name")
+
     resources = {
         resource.id: resource
         for resource in await UserData.objects.prefetch_related(["meta", "parent"]).all(

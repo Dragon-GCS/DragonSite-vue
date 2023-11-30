@@ -9,9 +9,12 @@ from PIL import Image
 from server import app
 from server.config import THUMBNAIL_SIZE, FileTypeEnum
 from server.models import FileInfo, UserData, database
-from server.schemas.disk import Resource
+from server.schemas.disk import Parent, Resource
 
 from . import TEST_USER
+
+Parent.__config__.orm_mode = True
+Resource.__config__.orm_mode = True
 
 
 class TestDisk(unittest.IsolatedAsyncioTestCase):
@@ -28,39 +31,39 @@ class TestDisk(unittest.IsolatedAsyncioTestCase):
         self.client.post("http://testserver/api/auth/login", data=TEST_USER.dict())
 
         self.public_root = await UserData.objects.get(name="/", owner=None, is_dir=True)
-        self.private_root = await UserData.objects.get(name="/", owner=TEST_USER, is_dir=True)
+        self.personal_root = await UserData.objects.get(name="/", owner=TEST_USER, is_dir=True)
         await self.clear_data()
 
     @database.transaction(force_rollback=True)
     async def test_get_resources(self):
         # fake data
         fake_folder = await UserData(
-            name="test", owner=TEST_USER, is_dir=True, parent=self.private_root
+            name="test", owner=TEST_USER, is_dir=True, parent=self.personal_root
         ).save()
         meta = await FileInfo(
             digest="098f6bcd4621d373cade4e832627b4f6", category="text", mime_type="text/plain"
         ).save()
         fake_file = await UserData(
-            name="test.txt", owner=TEST_USER, is_dir=False, meta=meta, parent=self.private_root
+            name="test.txt", owner=TEST_USER, is_dir=False, meta=meta, parent=self.personal_root
         ).save()
         # list resources
-        response = self.client.get("resources", params={"login_require": True})
+        response = self.client.get("resources", params={"personal": True})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()), 2)
 
         for res in response.json():
-            return_resource = Resource(**res)
+            return_resource = Resource.parse_obj(res)
             compare_resource = fake_folder if return_resource.is_dir else fake_file
-            self.assertEqual(return_resource, Resource(**compare_resource.dict()))
+            self.assertEqual(return_resource, Resource.from_orm(compare_resource))
         # list resources in public root
         self.assertEqual(self.client.get("resources").json(), [])
         # list resources with category
         response = self.client.get(
             "resources",
-            params={"login_require": True, "category": FileTypeEnum.TEXT.value},
+            params={"personal": True, "category": FileTypeEnum.TEXT.value},
         ).json()
         self.assertEqual(len(response), 1)
-        self.assertEqual(Resource(**response[0]), Resource(**fake_file.dict()))
+        self.assertEqual(Resource.parse_obj(response[0]), Resource.from_orm(fake_file))
 
     @database.transaction(force_rollback=True)
     async def test_create_folder(self):
@@ -76,13 +79,13 @@ class TestDisk(unittest.IsolatedAsyncioTestCase):
     async def test_create_file(self):
         response = self.client.post(
             "resources",
-            params={"login_require": True},
+            params={"personal": True},
             files={"files": ("test.txt", b"test")},
         )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(
             await UserData.objects.filter(
-                name="test.txt", owner=TEST_USER, parent=self.private_root
+                name="test.txt", owner=TEST_USER, parent=self.personal_root
             ).exists()
         )
         self.assertTrue(
@@ -94,30 +97,30 @@ class TestDisk(unittest.IsolatedAsyncioTestCase):
     @database.transaction(force_rollback=True)
     async def test_delete_resources(self):
         # create fake data
-        await UserData(name="test", owner=TEST_USER, is_dir=True, parent=self.private_root).save()
+        await UserData(name="test", owner=TEST_USER, is_dir=True, parent=self.personal_root).save()
         meta = await FileInfo(
             digest="098f6bcd4621d373cade4e832627b4f6", category="text", mime_type="text/plain"
         ).save()
         await UserData(
-            name="test.txt", owner=TEST_USER, is_dir=False, meta=meta, parent=self.private_root
+            name="test.txt", owner=TEST_USER, is_dir=False, meta=meta, parent=self.personal_root
         ).save()
 
         # delete the fake data
         response = self.client.delete(
             "resources",
-            params={"names": ["test", "test.txt"], "login_require": True},
+            params={"names": ["test", "test.txt"], "personal": True},
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()), 0)
         # check that the fake data was deleted
         self.assertFalse(
             await UserData.objects.filter(
-                name="test", owner=TEST_USER, parent=self.private_root
+                name="test", owner=TEST_USER, parent=self.personal_root
             ).exists()
         )
         self.assertFalse(
             await UserData.objects.filter(
-                name="test.txt", owner=TEST_USER, parent=self.private_root
+                name="test.txt", owner=TEST_USER, parent=self.personal_root
             ).exists()
         )
 
@@ -126,7 +129,7 @@ class TestDisk(unittest.IsolatedAsyncioTestCase):
         # create fake data
         self.client.post("resources", params={"name": "test1"})
         folder = await UserData(
-            name="test1", owner=TEST_USER, is_dir=True, parent=self.private_root
+            name="test1", owner=TEST_USER, is_dir=True, parent=self.personal_root
         ).save()
         meta = await FileInfo(
             digest="098f6bcd4621d373cade4e832627b4f6", category="text", mime_type="text/plain"
@@ -141,7 +144,7 @@ class TestDisk(unittest.IsolatedAsyncioTestCase):
                 "src": [folder.id.hex, file.id.hex],
                 "names": ["new_test1", "new_file1.txt"],
             },
-            params={"login_require": True},
+            params={"personal": True},
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()), 2)
@@ -149,12 +152,12 @@ class TestDisk(unittest.IsolatedAsyncioTestCase):
         # check that resources were renamed
         self.assertFalse(
             await UserData.objects.filter(
-                name="test1", owner=TEST_USER, parent=self.private_root
+                name="test1", owner=TEST_USER, parent=self.personal_root
             ).exists()
         )
         self.assertTrue(
             await UserData.objects.filter(
-                name="new_test1", owner=TEST_USER, parent=self.private_root
+                name="new_test1", owner=TEST_USER, parent=self.personal_root
             ).exists()
         )
 
@@ -163,7 +166,7 @@ class TestDisk(unittest.IsolatedAsyncioTestCase):
         )
         self.assertTrue(
             await UserData.objects.filter(
-                name="new_file1.txt", owner=TEST_USER, parent=self.private_root
+                name="new_file1.txt", owner=TEST_USER, parent=self.personal_root
             ).exists()
         )
 
@@ -175,21 +178,47 @@ class TestDisk(unittest.IsolatedAsyncioTestCase):
             image = f.read()
         response = self.client.post(
             "resources",
-            params={"login_require": True},
+            params={"personal": True},
             files={"files": (file_path.name, image)},
         )
         file = await UserData.objects.get(
-            name=file_path.name, owner=TEST_USER, parent=self.private_root
+            name=file_path.name, owner=TEST_USER, parent=self.personal_root
         )
-        params = {"path": file.id.hex, "login_require": True}
+        params = {"path": file.id.hex, "personal": True}
+        # test download file and preview file
         for extend_param in ({}, {"preview": True}):
-            response = self.client.get("download", params={**params, **extend_param})
+            response = self.client.get("item", params={**params, **extend_param})
             self.assertEqual(response.status_code, 200)
-            self.assertEqual(len(response.content), len(image))
             self.assertEqual(len(response.content), len(image))
             self.assertEqual(response.headers["Content-Type"], "image/png")
             self.assertEqual(response.headers["Content-Length"], str(len(image)))
 
-        response = self.client.get("download", params={**params, "thumbnail": True})
+        response = self.client.get("item", params={**params, "thumbnail": True})
         return_image = Image.open(BytesIO(response.content))
         self.assertEqual(return_image.size, THUMBNAIL_SIZE)
+
+    @database.transaction(force_rollback=True)
+    async def test_retrieve_folder(self):
+        folder1 = await UserData(
+            name="test1", parent=self.personal_root, owner=TEST_USER, is_dir=True
+        ).save()
+        folder2 = await UserData(name="test2", parent=folder1, owner=TEST_USER, is_dir=True).save()
+        compare_obj = Resource.from_orm(folder2)
+
+        response = self.client.get("item", params={"personal": True, "path": folder2.id.hex})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Resource.parse_obj(response.json()), compare_obj)
+
+        response = self.client.get(
+            "item", params={"personal": True, "path": folder2.id.hex, "parents": True}
+        )
+        self.assertEqual(response.status_code, 200)
+        return_obj = Resource.parse_obj(response.json())
+        for key, value in return_obj.dict().items():
+            if key == "parent":
+                self.assertEqual(
+                    value,
+                    [Parent.from_orm(folder1).dict(), Parent.from_orm(self.personal_root).dict()],
+                )
+            else:
+                self.assertEqual(value, getattr(compare_obj, key, ""))

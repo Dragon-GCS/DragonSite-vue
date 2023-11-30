@@ -23,7 +23,7 @@ class Resource(BaseModel):
     is_dir: bool
     modified_time: datetime
     meta: FileInfo | None
-    parent: Parent
+    parent: Parent | list[Parent]
     # generated fields
     size: str = ""
 
