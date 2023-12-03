@@ -31,7 +31,7 @@ const request = async (
     console.log(resp.status, resp.statusText);
 
     if (resp.status === 401) { router.push('/login') }
-    else {router.push('/notfound')}
+    else { router.push('/notfound') }
     return {}
 }
 
@@ -93,15 +93,12 @@ export const downloadFile = async (
     URL.revokeObjectURL(a.href)
 }
 
-export const previewFile = async (
-    path: string,
-    thumbnail: boolean = false
-): Promise<{ type: string, name: string, res: Blob }> => {
-    const res = await request('/api/disk/item', 'GET', { path, preview: true, thumbnail })
-    const name = res.headers.get('Content-Disposition')?.split('filename=')[1] || ''
-    const type = res.headers.get('Content-Type')?.split('/')[0] || ''
-    return { type, name, res: await res.blob() }
+export const getThumbnail = async (path: string): Promise<Blob> => {
+    const res = await request('/api/disk/item', 'GET', { path, thumbnail: true })
+    return await res.blob()
 }
+
+export const getPreviewUrl = (path: string) => `/api/disk/item?path=${path}&preview=true`
 
 const loadState = () => {
     state.token = getCookie('token')

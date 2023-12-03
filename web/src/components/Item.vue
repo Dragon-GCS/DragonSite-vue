@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import { downloadFile, previewFile, renameResource } from '../api';
+import { downloadFile, getThumbnail, renameResource } from '../api';
 import { previewable, UserData } from '../config';
 import { items, paths } from '../states';
 import { remove } from '../utils'
@@ -32,8 +32,7 @@ let imgUrl = ''
 if (data.is_dir) {
     imgUrl = '/static/folder.png'
 } else if (data.meta?.category === 'image') {
-    const { res } = await previewFile(data.id, true)
-    imgUrl = window.URL.createObjectURL(res)
+    imgUrl = window.URL.createObjectURL(await getThumbnail(data.id))
 }
 else {
     imgUrl = `/static/${data.meta?.category}.png`

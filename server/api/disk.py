@@ -6,12 +6,12 @@ from urllib.parse import quote
 from uuid import UUID
 
 from aiofiles import open
-from fastapi import APIRouter, Body, Depends, Query, UploadFile
+from fastapi import APIRouter, Body, Depends, Header, Query, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
 from PIL import Image
 from typing_extensions import Annotated
 
-from server.config import FILE_DIR, THUMBNAIL_SIZE, FileTypeEnum
+from server.config import CHUNK_SIZE, FILE_DIR, THUMBNAIL_SIZE, FileTypeEnum
 from server.depends import load_user_data
 from server.exceptions import InvalidRequest, ResourceAlreadyExists, ResourceNotFound
 from server.models import FileInfo, UserData
@@ -36,6 +36,7 @@ async def get_resources(
 @router.get("/item")
 async def download_file(
     resource: Annotated[UserData, Depends(load_user_data)],
+    range: str = Header(None),
     preview: bool = Query(False, description="Will return a stream response"),
     thumbnail: bool = Query(False, description="Whether return low resolution img"),
     parents: bool = Query(False, description="Whether return parent paths"),
@@ -68,19 +69,35 @@ async def download_file(
         )
 
     if preview:
+        if range:
+            _start, _, _end = range.replace("bytes=", "").partition("-")
+            start = int(_start)
+            end = int(_end or start + CHUNK_SIZE)
+            chunk_size = end - start
+            status_code = 206
+        else:
+            start, end, chunk_size = 0, resource.meta.size, resource.meta.size
+            status_code = 200
 
         async def load():
             async with open(resource.real_path, "rb") as f:
-                async for line in f:
-                    yield line
+                if range:
+                    await f.seek(start)
+                    yield await f.read(chunk_size)
+                else:
+                    async for line in f:
+                        yield line
 
         return StreamingResponse(
             load(),
-            media_type=mime_type,
+            status_code=status_code,
             headers={
-                "Content-Length": str(resource.meta.size),
+                "Content-Range": f"bytes {start}-{end}/{resource.meta.size}",
+                "Accept-Ranges": "bytes",
+                "Content-Length": str(chunk_size),
                 "Content-Disposition": f"attachment; filename={filename}",
             },
+            media_type=mime_type,
         )
 
     return FileResponse(resource.real_path, media_type=mime_type, filename=filename)

@@ -34,7 +34,7 @@ class Resource(BaseModel):
             return ""
 
         size = values["meta"].size
-        for fmt in ("K", "M", "G"):
+        for fmt in ("", "K", "M", "G"):
             if size < 1024:
                 return f"{size:.2f}{fmt}b"
             size /= 1024

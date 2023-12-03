@@ -27,6 +27,9 @@ FILE_DIR.mkdir(parents=True, exist_ok=True)
 # preview resolution
 THUMBNAIL_SIZE = (64, 64)
 
+# stream chunk size
+CHUNK_SIZE = 1024 * 1024 * 5
+
 # frontend dist dir
 DIST_DIR = ROOT / "../dist"
 
